@@ -1,125 +1,200 @@
 /**
- * Pure Web Audio API Sound Synthesizer for RegexLab.
- * Generates tactile, luxury acoustic micro-feedback without external audio assets.
+ * ============================================================================
+ * RegexLab - Web Audio API Sound Synthesizer
+ * ============================================================================
+ * 
+ * Welcome! To give RegexLab a tactile, luxury physical feedback feel (similar
+ * to high-end mechanical keyboards or Linear/Raycast app interactions),
+ * this module synthesizes audio directly in code!
+ * 
+ * ZERO AUDIO FILES DOWNLOADED:
+ * Many web apps load large .mp3 or .wav files over the network, which causes
+ * lag and consumes bandwidth. Instead, we use the browser's built-in
+ * `AudioContext` to generate pure electronic sound waves (sine, triangle, sawtooth)
+ * in real-time with microsecond precision!
+ * 
+ * AUDIO NODES USED:
+ * 1. `OscillatorNode`: Generates the sound wave at a given pitch/frequency (Hz).
+ * 2. `GainNode`: Controls the volume (gain) and creates smooth fade-outs (envelopes).
+ * 3. `ctx.destination`: The user's speakers or headphones.
  */
 
-class SoundFX {
-  private ctx: AudioContext | null = null;
-  private enabled: boolean = false;
+// Window type interface supporting legacy WebKit audio contexts
+interface WindowWithWebkitAudio extends Window {
+  webkitAudioContext?: typeof AudioContext;
+}
 
-  constructor() {
-    // Lazy audio context initialization upon user interaction
+/**
+ * Synthesizer class handling real-time procedural audio generation.
+ */
+class SoundSynthesizer {
+  /** The browser's master Web Audio context */
+  private audioContext: AudioContext | null = null;
+
+  /** Global toggle: sound is disabled by default to respect user privacy */
+  private isAudioEnabled: boolean = false;
+
+  /**
+   * Enables or disables sound effects.
+   * 
+   * @param enabled - True to play sounds, false to mute
+   */
+  public setEnabled(enabled: boolean): void {
+    this.isAudioEnabled = enabled;
+
+    // Lazily instantiate the AudioContext upon user gesture
+    if (enabled && !this.audioContext) {
+      this.initializeAudioContext();
+    }
   }
 
-  public setEnabled(enabled: boolean) {
-    this.enabled = enabled;
-    if (enabled && !this.ctx) {
+  /**
+   * Returns whether sound effects are currently turned on.
+   */
+  public isEnabled(): boolean {
+    return this.isAudioEnabled;
+  }
+
+  /**
+   * Initializes and resumes the AudioContext safely.
+   */
+  private initializeAudioContext(): void {
+    if (!this.audioContext && typeof window !== 'undefined') {
       try {
-        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-        this.ctx = new AudioCtx();
+        const windowWithAudio = window as WindowWithWebkitAudio;
+        const AudioContextClass = window.AudioContext || windowWithAudio.webkitAudioContext;
+
+        if (AudioContextClass) {
+          this.audioContext = new AudioContextClass();
+        }
       } catch {
-        this.ctx = null;
+        this.audioContext = null;
       }
     }
-  }
 
-  private initCtx() {
-    if (!this.ctx && this.enabled) {
-      try {
-        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-        this.ctx = new AudioCtx();
-      } catch {}
-    }
-    if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume().catch(() => {});
+    // Browsers suspend audio contexts until the user interacts with the page
+    if (this.audioContext && this.audioContext.state === 'suspended') {
+      this.audioContext.resume().catch(() => {
+        // Silently catch autoplay restriction errors
+      });
     }
   }
 
-  /** Soft mechanical keystroke click */
-  public playClick(freq = 600) {
-    if (!this.enabled) return;
-    this.initCtx();
-    if (!this.ctx) return;
+  /**
+   * Plays a subtle mechanical keystroke click.
+   * Useful when typing regex or clicking quick-insert buttons.
+   * 
+   * @param pitchFrequencyHz - Pitch of the click in Hertz (default: 600Hz)
+   */
+  public playClick(pitchFrequencyHz: number = 600): void {
+    if (!this.isAudioEnabled) return;
+    this.initializeAudioContext();
+    if (!this.audioContext) return;
 
     try {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
+      const now = this.audioContext.currentTime;
+      const oscillator = this.audioContext.createOscillator();
+      const volumeControl = this.audioContext.createGain();
 
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(150, this.ctx.currentTime + 0.04);
+      // Sine wave gives a soft, modern woodblock/mechanical click
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(pitchFrequencyHz, now);
+      // Rapid pitch drop simulates a physical switch contact
+      oscillator.frequency.exponentialRampToValueAtTime(150, now + 0.04);
 
-      gain.gain.setValueAtTime(0.04, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.04);
+      // Volume envelope: quick attack, fast exponential decay
+      volumeControl.gain.setValueAtTime(0.04, now);
+      volumeControl.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
 
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      // Connect: Oscillator -> Volume -> Speakers
+      oscillator.connect(volumeControl);
+      volumeControl.connect(this.audioContext.destination);
 
-      osc.start();
-      osc.stop(this.ctx.currentTime + 0.04);
-    } catch {}
+      oscillator.start(now);
+      oscillator.stop(now + 0.04);
+    } catch {
+      // Audio playback errors are non-critical and fail gracefully
+    }
   }
 
-  /** Step tick for engine debugger */
-  public playStepTick() {
+  /**
+   * Plays a higher-pitched tactile tick when the engine visualizer steps forward.
+   */
+  public playStepTick(): void {
     this.playClick(850);
   }
 
-  /** Harmonic chime on match success or challenge completion */
-  public playSuccess() {
-    if (!this.enabled) return;
-    this.initCtx();
-    if (!this.ctx) return;
+  /**
+   * Plays a harmonic 4-tone chord arpeggio (C5 - E5 - G5 - C6) when a pattern matches
+   * or a learning challenge is successfully solved.
+   */
+  public playSuccess(): void {
+    if (!this.isAudioEnabled) return;
+    this.initializeAudioContext();
+    if (!this.audioContext) return;
 
     try {
-      const now = this.ctx.currentTime;
-      const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 chord
+      const startTime = this.audioContext.currentTime;
+      // Frequencies corresponding to musical notes C5, E5, G5, and C6
+      const musicalChimeNotes = [523.25, 659.25, 783.99, 1046.5];
 
-      notes.forEach((freq, idx) => {
-        const osc = this.ctx!.createOscillator();
-        const gain = this.ctx!.createGain();
+      musicalChimeNotes.forEach((frequencyHz, noteIndex) => {
+        const noteStartTime = startTime + noteIndex * 0.08;
+        const oscillator = this.audioContext!.createOscillator();
+        const volumeControl = this.audioContext!.createGain();
 
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+        // Triangle wave provides a warm, bell-like timbre
+        oscillator.type = 'triangle';
+        oscillator.frequency.setValueAtTime(frequencyHz, noteStartTime);
 
-        gain.gain.setValueAtTime(0, now + idx * 0.08);
-        gain.gain.linearRampToValueAtTime(0.06, now + idx * 0.08 + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.08 + 0.4);
+        // Volume envelope: smooth fade-in, gentle bell decay
+        volumeControl.gain.setValueAtTime(0, noteStartTime);
+        volumeControl.gain.linearRampToValueAtTime(0.06, noteStartTime + 0.02);
+        volumeControl.gain.exponentialRampToValueAtTime(0.0001, noteStartTime + 0.4);
 
-        osc.connect(gain);
-        gain.connect(this.ctx!.destination);
+        oscillator.connect(volumeControl);
+        volumeControl.connect(this.audioContext!.destination);
 
-        osc.start(now + idx * 0.08);
-        osc.stop(now + idx * 0.08 + 0.4);
+        oscillator.start(noteStartTime);
+        oscillator.stop(noteStartTime + 0.4);
       });
-    } catch {}
+    } catch {
+      // Fail gracefully
+    }
   }
 
-  /** Low resonance alert for backtracking or ReDoS risk */
-  public playWarning() {
-    if (!this.enabled) return;
-    this.initCtx();
-    if (!this.ctx) return;
+  /**
+   * Plays a low-frequency alert hum when catastrophic backtracking or ReDoS risk is detected.
+   */
+  public playWarning(): void {
+    if (!this.isAudioEnabled) return;
+    this.initializeAudioContext();
+    if (!this.audioContext) return;
 
     try {
-      const now = this.ctx.currentTime;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
+      const now = this.audioContext.currentTime;
+      const oscillator = this.audioContext.createOscillator();
+      const volumeControl = this.audioContext.createGain();
 
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(160, now);
-      osc.frequency.linearRampToValueAtTime(110, now + 0.15);
+      // Sawtooth wave provides a rich, buzzy warning timbre
+      oscillator.type = 'sawtooth';
+      oscillator.frequency.setValueAtTime(160, now);
+      oscillator.frequency.linearRampToValueAtTime(110, now + 0.15);
 
-      gain.gain.setValueAtTime(0.05, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+      // Volume envelope
+      volumeControl.gain.setValueAtTime(0.05, now);
+      volumeControl.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
 
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      oscillator.connect(volumeControl);
+      volumeControl.connect(this.audioContext.destination);
 
-      osc.start(now);
-      osc.stop(now + 0.2);
-    } catch {}
+      oscillator.start(now);
+      oscillator.stop(now + 0.2);
+    } catch {
+      // Fail gracefully
+    }
   }
 }
 
-export const soundFX = new SoundFX();
+/** Export a singleton instance for use across all components */
+export const soundFX = new SoundSynthesizer();

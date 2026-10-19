@@ -1,10 +1,48 @@
+/**
+ * ============================================================================
+ * RegexLab - Abstract Syntax Tree (AST) Builder
+ * ============================================================================
+ * 
+ * Welcome! In this file, we convert our flat list of tokens into a hierarchical
+ * "Tree" structure called an Abstract Syntax Tree (AST).
+ * 
+ * WHAT IS AN AST?
+ * Think of an AST like a family tree or an organizational chart for your code.
+ * In a regular expression like `(a|b)+`:
+ * 
+ *   Expression (Root)
+ *      └── Quantifier (+)
+ *             └── Group ()
+ *                    ├── Literal (a)
+ *                    ├── Alternation (|)
+ *                    └── Literal (b)
+ * 
+ * WHY DO WE NEED AN AST?
+ * A flat list of tokens doesn't easily tell us which elements are inside a group
+ * or which token a quantifier (like `+` or `*`) is modifying. The AST makes
+ * this parent-child relationship completely clear!
+ */
+
 import { AstNode } from '../types/regex';
 import { tokenizeRegex } from './tokenizer';
 
+/**
+ * Builds an Abstract Syntax Tree (AST) from a raw regular expression string.
+ * 
+ * @param pattern - The raw regular expression pattern to parse
+ * @returns The root AstNode of the generated tree
+ * 
+ * @example
+ * ```typescript
+ * const ast = buildRegexAst('^a+b$');
+ * console.log(ast.children?.length); // 3 (Anchor, Quantifier wrapping 'a', Anchor)
+ * ```
+ */
 export function buildRegexAst(pattern: string): AstNode {
+  // Step 1: Handle the edge case of an empty pattern
   if (!pattern) {
     return {
-      id: 'ast-root',
+      id: 'ast-root-empty',
       type: 'Expression',
       label: 'Empty Pattern',
       raw: '',
@@ -14,10 +52,11 @@ export function buildRegexAst(pattern: string): AstNode {
     };
   }
 
+  // Step 2: Convert the pattern into a flat array of tokens
   const tokens = tokenizeRegex(pattern);
 
-  // Group tokens into a tree structure
-  const root: AstNode = {
+  // Step 3: Create the top-level "Root" container node of our tree
+  const rootNode: AstNode = {
     id: 'ast-root',
     type: 'Expression',
     label: `Pattern: /${pattern}/`,
@@ -27,13 +66,32 @@ export function buildRegexAst(pattern: string): AstNode {
     children: [],
   };
 
-  // Stack of node containers (for groups)
-  const nodeStack: AstNode[] = [root];
+  /**
+   * We use a "Stack" to track nested parent nodes.
+   * Whenever we see a group open `(`, we push the new group onto the stack
+   * so all subsequent tokens become children of this group.
+   * When we see `)`, we pop the group off the stack!
+   */
+  const parentNodeStack: AstNode[] = [rootNode];
 
+  // Helper function to safely get the current active parent container
+  const getCurrentParent = (): AstNode => {
+    return parentNodeStack[parentNodeStack.length - 1];
+  };
+
+  // Step 4: Iterate through all tokens and insert them into the tree
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
-    const currentParent = nodeStack[nodeStack.length - 1];
+    const currentParent = getCurrentParent();
 
+    // Ensure the parent's children array exists
+    if (!currentParent.children) {
+      currentParent.children = [];
+    }
+
+    // ------------------------------------------------------------------------
+    // CASE A: GROUPS & LOOKAROUNDS (Start of a nested container)
+    // ------------------------------------------------------------------------
     if (token.category === 'group-open' || token.category === 'lookaround') {
       const groupNode: AstNode = {
         id: `ast-${token.id}`,
@@ -48,45 +106,63 @@ export function buildRegexAst(pattern: string): AstNode {
           groupName: token.groupName,
         },
       };
-      if (!currentParent.children) currentParent.children = [];
+
+      // Add the new group as a child of the current container
       currentParent.children.push(groupNode);
-      nodeStack.push(groupNode);
+
+      // Push this group onto our stack so subsequent tokens become its children
+      parentNodeStack.push(groupNode);
       continue;
     }
 
+    // ------------------------------------------------------------------------
+    // CASE B: GROUP CLOSE `)` (Exit current nested container)
+    // ------------------------------------------------------------------------
     if (token.category === 'group-close') {
-      if (nodeStack.length > 1) {
-        const closedGroup = nodeStack.pop();
-        if (closedGroup) {
-          closedGroup.end = token.end;
-          closedGroup.raw = pattern.slice(closedGroup.start, token.end);
+      // Never pop the root node (ensure stack depth > 1)
+      if (parentNodeStack.length > 1) {
+        const closedGroupNode = parentNodeStack.pop();
+
+        if (closedGroupNode) {
+          // Update the group node's end position and raw string to include the ')'
+          closedGroupNode.end = token.end;
+          closedGroupNode.raw = pattern.slice(closedGroupNode.start, token.end);
         }
       }
       continue;
     }
 
+    // ------------------------------------------------------------------------
+    // CASE C: QUANTIFIERS (*, +, ?, {n,m})
+    // ------------------------------------------------------------------------
     if (token.category === 'quantifier') {
-      // Attach quantifier to the last child in current parent
-      if (currentParent.children && currentParent.children.length > 0) {
-        const targetNode = currentParent.children[currentParent.children.length - 1];
-        const quantNode: AstNode = {
+      // Quantifiers modify the immediately preceding sibling element!
+      if (currentParent.children.length > 0) {
+        const targetElement = currentParent.children[currentParent.children.length - 1];
+
+        // Create a Quantifier node that WRAPS the target element as its child
+        const quantifierNode: AstNode = {
           id: `ast-${token.id}`,
           type: 'Quantifier',
           label: token.title,
-          raw: token.raw,
-          start: targetNode.start,
+          raw: `${targetElement.raw}${token.raw}`,
+          start: targetElement.start,
           end: token.end,
-          children: [targetNode],
+          children: [targetElement],
           meta: token.quantifier,
         };
-        // Replace target with quantifier wrapping target
-        currentParent.children[currentParent.children.length - 1] = quantNode;
+
+        // Replace the target element in the parent's list with this new wrapping quantifier
+        currentParent.children[currentParent.children.length - 1] = quantifierNode;
       }
       continue;
     }
 
+    // ------------------------------------------------------------------------
+    // CASE D: ALTERNATION (Logical OR `|`)
+    // ------------------------------------------------------------------------
     if (token.category === 'alternation') {
-      const altNode: AstNode = {
+      const alternationNode: AstNode = {
         id: `ast-${token.id}`,
         type: 'Disjunction',
         label: 'Alternation (OR)',
@@ -94,11 +170,14 @@ export function buildRegexAst(pattern: string): AstNode {
         start: token.start,
         end: token.end,
       };
-      if (!currentParent.children) currentParent.children = [];
-      currentParent.children.push(altNode);
+
+      currentParent.children.push(alternationNode);
       continue;
     }
 
+    // ------------------------------------------------------------------------
+    // CASE E: ANCHORS (^, $, \b, \B)
+    // ------------------------------------------------------------------------
     if (token.category === 'anchor') {
       const anchorNode: AstNode = {
         id: `ast-${token.id}`,
@@ -108,11 +187,14 @@ export function buildRegexAst(pattern: string): AstNode {
         start: token.start,
         end: token.end,
       };
-      if (!currentParent.children) currentParent.children = [];
+
       currentParent.children.push(anchorNode);
       continue;
     }
 
+    // ------------------------------------------------------------------------
+    // CASE F: CHARACTER CLASSES ([a-z], \d, \w, etc.)
+    // ------------------------------------------------------------------------
     if (token.category === 'char-class') {
       const classNode: AstNode = {
         id: `ast-${token.id}`,
@@ -121,15 +203,19 @@ export function buildRegexAst(pattern: string): AstNode {
         raw: token.raw,
         start: token.start,
         end: token.end,
-        meta: { detail: token.detail },
+        meta: {
+          detail: token.detail,
+        },
       };
-      if (!currentParent.children) currentParent.children = [];
+
       currentParent.children.push(classNode);
       continue;
     }
 
-    // Literals or Escapes
-    const litNode: AstNode = {
+    // ------------------------------------------------------------------------
+    // CASE G: LITERAL CHARACTERS & ESCAPES
+    // ------------------------------------------------------------------------
+    const literalNode: AstNode = {
       id: `ast-${token.id}`,
       type: 'Literal',
       label: token.title,
@@ -137,9 +223,50 @@ export function buildRegexAst(pattern: string): AstNode {
       start: token.start,
       end: token.end,
     };
-    if (!currentParent.children) currentParent.children = [];
-    currentParent.children.push(litNode);
+
+    currentParent.children.push(literalNode);
   }
 
-  return root;
+  return rootNode;
+}
+
+/**
+ * Counts the total number of nodes in an AST tree recursively.
+ * 
+ * @param node - The starting AST node (usually the root)
+ * @returns Total count of all nodes and descendant nodes
+ */
+export function countAstNodes(node: AstNode): number {
+  if (!node.children || node.children.length === 0) {
+    return 1;
+  }
+
+  let count = 1;
+  for (const child of node.children) {
+    count += countAstNodes(child);
+  }
+
+  return count;
+}
+
+/**
+ * Computes the maximum depth of an AST tree.
+ * 
+ * @param node - The root AST node
+ * @returns Tree depth (1 for leaf node, 2 for node with children, etc.)
+ */
+export function getAstMaxDepth(node: AstNode): number {
+  if (!node.children || node.children.length === 0) {
+    return 1;
+  }
+
+  let maxChildDepth = 0;
+  for (const child of node.children) {
+    const childDepth = getAstMaxDepth(child);
+    if (childDepth > maxChildDepth) {
+      maxChildDepth = childDepth;
+    }
+  }
+
+  return 1 + maxChildDepth;
 }

@@ -1,208 +1,434 @@
+/**
+ * ============================================================================
+ * RegexLab - Regex State Machine & Execution Simulator
+ * ============================================================================
+ * 
+ * Welcome! This is the "brain" behind the Engine Visualizer.
+ * 
+ * HOW DO REGEX ENGINES ACTUALLY WORK?
+ * Most developers treat regular expressions as a black box: you input a pattern
+ * and a string, and it magically returns true or false.
+ * 
+ * But under the hood, a regex engine is a "Virtual Machine" or "State Machine"
+ * that steps through your text character-by-character:
+ * 
+ *   1. It starts a search cursor at character 0 of your text.
+ *   2. It compares the current character with the first token in your regex.
+ *   3. If it matches, it moves BOTH the regex cursor and the text cursor forward.
+ *   4. If a greedy quantifier (like `+` or `*`) is used, it consumes as many
+ *      characters as possible.
+ *   5. If a later token fails, it "backtracks" (rewinds) to try alternative paths!
+ *   6. If all paths fail starting at character 0, it advances the search cursor
+ *      to character 1 and tries again!
+ * 
+ * This file records every single one of those decisions into an array of
+ * `ExecutionStep` objects so users can watch the machine think in slow motion!
+ */
+
 import { ExecutionStep } from '../types/regex';
 import { tokenizeRegex } from './tokenizer';
 
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+/** Maximum number of recorded steps to prevent browser tab freezing on huge texts */
+const MAX_SIMULATION_STEPS = 500;
+
+/** Preview string length for debugging logs */
+const LOG_PREVIEW_LIMIT = 24;
+
+// ============================================================================
+// SIMULATION FUNCTION
+// ============================================================================
+
 /**
- * Simulates step-by-step execution of regular expression matching on input text.
- * Generates an educational frame-by-frame trace showing cursor advances, character tests,
- * state changes, branching, and backtracking.
+ * Simulates the execution of a regular expression against an input string.
+ * Records every step, comparison, branch, and backtrack for educational playback.
+ * 
+ * @param pattern - The regular expression pattern string
+ * @param text - The test string being searched
+ * @param flags - Regex flags (e.g., 'i' for case-insensitive, 'm' for multiline)
+ * @returns Array of sequential execution steps
+ * 
+ * @example
+ * ```typescript
+ * const trace = simulateRegexExecution('a+b', 'aaab');
+ * console.log(trace.length); // e.g. 8 steps
+ * console.log(trace[0].action); // 'start'
+ * ```
  */
-export function simulateRegexExecution(pattern: string, text: string, flags: string = 'g'): ExecutionStep[] {
-  const steps: ExecutionStep[] = [];
-  if (!pattern) return steps;
+export function simulateRegexExecution(
+  pattern: string,
+  text: string,
+  flags: string = 'g'
+): ExecutionStep[] {
+  const recordedSteps: ExecutionStep[] = [];
 
+  // If either pattern or text is completely empty, return empty trace
+  if (!pattern) {
+    return recordedSteps;
+  }
+
+  // Tokenize the pattern into structured objects
   const tokens = tokenizeRegex(pattern);
-  let stepIndex = 0;
+  let stepCounter = 0;
 
-  function addStep(
+  /**
+   * Helper function to record a single action into the timeline.
+   */
+  const recordStep = (
     regexIndex: number,
     textIndex: number,
     action: ExecutionStep['action'],
     description: string,
     extra: Partial<ExecutionStep> = {}
-  ) {
-    if (steps.length > 500) return; // Safety limit for visualizer trace
-    steps.push({
-      stepIndex: stepIndex++,
+  ): void => {
+    // Safety check: stop recording if we exceed the maximum step limit
+    if (recordedSteps.length >= MAX_SIMULATION_STEPS) {
+      return;
+    }
+
+    const safeTextIndex = Math.min(textIndex, text.length);
+
+    recordedSteps.push({
+      stepIndex: stepCounter++,
       regexIndex,
-      textIndex: Math.min(textIndex, text.length),
+      textIndex: safeTextIndex,
       action,
       description,
-      matchedSoFar: text.slice(0, Math.min(textIndex, text.length)),
-      stackDepth: 0,
+      matchedSoFar: text.slice(0, safeTextIndex),
+      stackDepth: extra.stackDepth ?? 0,
       ...extra,
     });
-  }
+  };
 
-  addStep(0, 0, 'start', `Engine starts: preparing to match /${pattern}/${flags} against text "${text.slice(0, 20)}${text.length > 20 ? '...' : ''}"`);
+  // Step 0: Record initial engine boot-up state
+  const textPreview = text.length > LOG_PREVIEW_LIMIT
+    ? `${text.slice(0, LOG_PREVIEW_LIMIT)}...`
+    : text;
 
-  // Simple and intuitive virtual machine simulation
-  let textPos = 0;
+  recordStep(
+    0,
+    0,
+    'start',
+    `Engine initialized: evaluating /${pattern}/${flags} against "${textPreview}"`
+  );
+
   let matchFound = false;
+  const isCaseInsensitive = flags.includes('i');
+  const isMultiline = flags.includes('m');
+  const isDotAll = flags.includes('s');
 
-  // Outer loop: starting position in text
-  for (let startPos = 0; startPos <= text.length && !matchFound; startPos++) {
-    textPos = startPos;
-    let tokenIdx = 0;
-    let matched = true;
-    let currentMatched = '';
-    let isAnchorStart = tokens.length > 0 && tokens[0].category === 'anchor' && tokens[0].raw === '^';
+  /**
+   * Helper to test if a character matches a specific token.
+   */
+  const doesCharacterMatchToken = (
+    charIndex: number,
+    token: (typeof tokens)[0]
+  ): boolean => {
+    if (charIndex >= text.length) {
+      return false; // Reached End-Of-File (EOF)
+    }
 
-    if (startPos > 0) {
-      if (isAnchorStart) {
-        addStep(0, startPos, 'fail', 'Pattern begins with "^" anchor: cannot match after position 0');
+    const character = text[charIndex];
+
+    // Check 1: Exact Literal Letter
+    if (token.category === 'literal') {
+      return isCaseInsensitive
+        ? character.toLowerCase() === token.raw.toLowerCase()
+        : character === token.raw;
+    }
+
+    // Check 2: Shorthand Digit \d
+    if (token.raw === '\\d') return /\d/.test(character);
+    if (token.raw === '\\D') return /\D/.test(character);
+
+    // Check 3: Shorthand Word Character \w
+    if (token.raw === '\\w') return /\w/.test(character);
+    if (token.raw === '\\W') return /\W/.test(character);
+
+    // Check 4: Shorthand Whitespace \s
+    if (token.raw === '\\s') return /\s/.test(character);
+    if (token.raw === '\\S') return /\S/.test(character);
+
+    // Check 5: Dot Wildcard `.`
+    if (token.raw === '.') {
+      return isDotAll ? true : character !== '\n' && character !== '\r';
+    }
+
+    // Check 6: Bracketed Character Set `[a-z0-9]`
+    if (token.category === 'char-class' && token.raw.startsWith('[')) {
+      try {
+        const setRegex = new RegExp(token.raw, isCaseInsensitive ? 'i' : '');
+        return setRegex.test(character);
+      } catch {
+        return false;
+      }
+    }
+
+    return false;
+  };
+
+  // ==========================================================================
+  // OUTER LOOP: Try matching starting at each character position in the text
+  // ==========================================================================
+  for (let searchStart = 0; searchStart <= text.length && !matchFound; searchStart++) {
+    let currentTextPos = searchStart;
+    let tokenIndex = 0;
+    let currentAttemptSuccessful = true;
+
+    const startsWithAnchor =
+      tokens.length > 0 && tokens[0].category === 'anchor' && tokens[0].raw === '^';
+
+    // If searching past index 0 but pattern starts with `^`, it can NEVER match
+    if (searchStart > 0) {
+      if (startsWithAnchor && !isMultiline) {
+        recordStep(
+          0,
+          searchStart,
+          'fail',
+          'Pattern begins with "^" anchor: cannot match after index 0 without multiline (/m) flag'
+        );
         break;
       }
-      addStep(0, startPos, 'advance_cursor', `No match starting at index ${startPos - 1}. Advancing search cursor to index ${startPos} ('${text[startPos] ?? 'EOF'}')`);
+
+      recordStep(
+        0,
+        searchStart,
+        'advance_cursor',
+        `No match starting at index ${searchStart - 1}. Advancing search cursor to index ${searchStart} ('${text[searchStart] ?? 'EOF'}')`
+      );
     }
 
-    while (tokenIdx < tokens.length) {
-      const token = tokens[tokenIdx];
-      const nextToken = tokenIdx + 1 < tokens.length ? tokens[tokenIdx + 1] : null;
-      const hasQuantifier = nextToken && nextToken.category === 'quantifier';
-      const quant = hasQuantifier ? nextToken.quantifier : null;
+    // ========================================================================
+    // INNER LOOP: Walk through each token in the regex pattern
+    // ========================================================================
+    while (tokenIndex < tokens.length) {
+      const currentToken = tokens[tokenIndex];
+      const nextToken = tokenIndex + 1 < tokens.length ? tokens[tokenIndex + 1] : null;
+      const isQuantified = nextToken !== null && nextToken.category === 'quantifier';
+      const quantifierData = isQuantified ? nextToken.quantifier : null;
 
-      // Anchors: ^ and $
-      if (token.category === 'anchor') {
-        if (token.raw === '^') {
-          const isAtStart = textPos === 0 || (flags.includes('m') && textPos > 0 && text[textPos - 1] === '\n');
-          addStep(token.start, textPos, 'anchor_check', `Checking '^' start anchor: ${isAtStart ? 'PASSED (at beginning of line)' : 'FAILED (not at line start)'}`, { token });
-          if (!isAtStart) {
-            matched = false;
+      // ----------------------------------------------------------------------
+      // Token Type A: Anchors (^, $, \b)
+      // ----------------------------------------------------------------------
+      if (currentToken.category === 'anchor') {
+        if (currentToken.raw === '^') {
+          const isAtLineStart =
+            currentTextPos === 0 ||
+            (isMultiline && currentTextPos > 0 && text[currentTextPos - 1] === '\n');
+
+          recordStep(
+            currentToken.start,
+            currentTextPos,
+            'anchor_check',
+            `Checking '^' start anchor: ${isAtLineStart ? 'PASSED (at line beginning)' : 'FAILED (not at line start)'}`,
+            { token: currentToken }
+          );
+
+          if (!isAtLineStart) {
+            currentAttemptSuccessful = false;
             break;
           }
-        } else if (token.raw === '$') {
-          const isAtEnd = textPos === text.length || (flags.includes('m') && text[textPos] === '\n');
-          addStep(token.start, textPos, 'anchor_check', `Checking '$' end anchor: ${isAtEnd ? 'PASSED (at end of line)' : 'FAILED (characters remain)'}`, { token });
-          if (!isAtEnd) {
-            matched = false;
+        } else if (currentToken.raw === '$') {
+          const isAtLineEnd =
+            currentTextPos === text.length ||
+            (isMultiline && text[currentTextPos] === '\n');
+
+          recordStep(
+            currentToken.start,
+            currentTextPos,
+            'anchor_check',
+            `Checking '$' end anchor: ${isAtLineEnd ? 'PASSED (at line end)' : 'FAILED (characters remain before line end)'}`,
+            { token: currentToken }
+          );
+
+          if (!isAtLineEnd) {
+            currentAttemptSuccessful = false;
             break;
           }
-        } else if (token.raw === '\\b') {
-          const isWordPrev = textPos > 0 && /\w/.test(text[textPos - 1]);
-          const isWordNext = textPos < text.length && /\w/.test(text[textPos]);
-          const isWordBoundary = isWordPrev !== isWordNext;
-          addStep(token.start, textPos, 'anchor_check', `Checking '\\b' word boundary: ${isWordBoundary ? 'PASSED' : 'FAILED'}`, { token });
+        } else if (currentToken.raw === '\\b') {
+          const previousIsWord = currentTextPos > 0 && /\w/.test(text[currentTextPos - 1]);
+          const nextIsWord = currentTextPos < text.length && /\w/.test(text[currentTextPos]);
+          const isWordBoundary = previousIsWord !== nextIsWord;
+
+          recordStep(
+            currentToken.start,
+            currentTextPos,
+            'anchor_check',
+            `Checking '\\b' word boundary: ${isWordBoundary ? 'PASSED (boundary detected)' : 'FAILED (not at boundary)'}`,
+            { token: currentToken }
+          );
+
           if (!isWordBoundary) {
-            matched = false;
+            currentAttemptSuccessful = false;
             break;
           }
         }
-        tokenIdx++;
+
+        tokenIndex++;
         continue;
       }
 
-      // Group delimiters
-      if (token.category === 'group-open') {
-        addStep(token.start, textPos, 'group_enter', `Entering group ${token.title}`, { token });
-        tokenIdx++;
+      // ----------------------------------------------------------------------
+      // Token Type B: Group Containers (Parentheses)
+      // ----------------------------------------------------------------------
+      if (currentToken.category === 'group-open') {
+        recordStep(
+          currentToken.start,
+          currentTextPos,
+          'group_enter',
+          `Entering ${currentToken.title}`,
+          { token: currentToken }
+        );
+        tokenIndex++;
         continue;
       }
-      if (token.category === 'group-close') {
-        addStep(token.start, textPos, 'group_exit', `Exiting group`, { token });
-        tokenIdx++;
+
+      if (currentToken.category === 'group-close') {
+        recordStep(
+          currentToken.start,
+          currentTextPos,
+          'group_exit',
+          `Exiting ${currentToken.title}`,
+          { token: currentToken }
+        );
+        tokenIndex++;
         continue;
       }
 
-      // Matching a character / class with or without quantifier
-      const testChar = (idx: number): boolean => {
-        if (idx >= text.length) return false;
-        const c = text[idx];
-        const isCaseInsensitive = flags.includes('i');
+      // ----------------------------------------------------------------------
+      // Token Type C: Single Character Test (Without Quantifier)
+      // ----------------------------------------------------------------------
+      if (!isQuantified) {
+        const charAtCursor = currentTextPos < text.length ? text[currentTextPos] : 'EOF';
 
-        if (token.category === 'literal') {
-          return isCaseInsensitive ? c.toLowerCase() === token.raw.toLowerCase() : c === token.raw;
-        }
-        if (token.raw === '\\d') return /\d/.test(c);
-        if (token.raw === '\\D') return /\D/.test(c);
-        if (token.raw === '\\w') return /\w/.test(c);
-        if (token.raw === '\\W') return /\W/.test(c);
-        if (token.raw === '\\s') return /\s/.test(c);
-        if (token.raw === '\\S') return /\S/.test(c);
-        if (token.raw === '.') return flags.includes('s') ? true : c !== '\n' && c !== '\r';
-        
-        // Character set [...]
-        if (token.category === 'char-class' && token.raw.startsWith('[')) {
-          try {
-            const regexPart = new RegExp(token.raw, isCaseInsensitive ? 'i' : '');
-            return regexPart.test(c);
-          } catch {
-            return false;
-          }
-        }
-
-        return false;
-      };
-
-      if (!hasQuantifier) {
-        // Single character test
-        const charAtCursor = textPos < text.length ? text[textPos] : 'EOF';
-        addStep(token.start, textPos, 'test_char', `Testing token ${token.raw} against '${charAtCursor}' at text index ${textPos}`, {
-          token,
-          charTested: charAtCursor,
-        });
-
-        if (testChar(textPos)) {
-          addStep(token.end, textPos + 1, 'match_char', `Matched '${text[textPos]}' successfully with ${token.raw}`, {
-            token,
-            charTested: text[textPos],
-          });
-          currentMatched += text[textPos];
-          textPos++;
-          tokenIdx++;
-        } else {
-          addStep(token.start, textPos, 'branch_failed', `Mismatch! Expected ${token.title}, but found '${charAtCursor}'`, {
-            token,
+        recordStep(
+          currentToken.start,
+          currentTextPos,
+          'test_char',
+          `Testing token ${currentToken.raw} against character '${charAtCursor}' at text index ${currentTextPos}`,
+          {
+            token: currentToken,
             charTested: charAtCursor,
-          });
-          matched = false;
+          }
+        );
+
+        if (doesCharacterMatchToken(currentTextPos, currentToken)) {
+          recordStep(
+            currentToken.end,
+            currentTextPos + 1,
+            'match_char',
+            `Matched '${text[currentTextPos]}' successfully with ${currentToken.raw}`,
+            {
+              token: currentToken,
+              charTested: text[currentTextPos],
+            }
+          );
+          currentTextPos++;
+          tokenIndex++;
+        } else {
+          recordStep(
+            currentToken.start,
+            currentTextPos,
+            'branch_failed',
+            `Mismatch! Expected ${currentToken.title}, but found '${charAtCursor}'`,
+            {
+              token: currentToken,
+              charTested: charAtCursor,
+            }
+          );
+          currentAttemptSuccessful = false;
           break;
         }
-      } else {
-        // Quantified token (e.g. +, *, ?, {2,5})
-        const min = quant?.min ?? 0;
-        const max = quant?.max ?? Infinity;
-        let matchCount = 0;
+      }
+      // ----------------------------------------------------------------------
+      // Token Type D: Quantified Token (With +, *, ?, {n,m})
+      // ----------------------------------------------------------------------
+      else {
+        const minCount = quantifierData?.min ?? 0;
+        const maxCount = quantifierData?.max ?? Infinity;
+        let matchedRepetitions = 0;
 
-        addStep(token.start, textPos, 'branch_start', `Evaluating quantifier ${token.raw}${nextToken?.raw ?? ''} (min: ${min}, max: ${max === Infinity ? '∞' : max})`, {
-          token,
-        });
+        recordStep(
+          currentToken.start,
+          currentTextPos,
+          'branch_start',
+          `Evaluating quantifier ${currentToken.raw}${nextToken?.raw ?? ''} (minimum: ${minCount}, maximum: ${maxCount === Infinity ? 'infinite' : maxCount})`,
+          { token: currentToken }
+        );
 
-        while (matchCount < max && textPos < text.length && testChar(textPos)) {
-          addStep(token.start, textPos + 1, 'match_char', `Quantifier match #${matchCount + 1}: '${text[textPos]}' matched ${token.raw}`, {
-            token,
-            charTested: text[textPos],
-          });
-          currentMatched += text[textPos];
-          textPos++;
-          matchCount++;
+        // Greedily consume matching characters
+        while (
+          matchedRepetitions < maxCount &&
+          currentTextPos < text.length &&
+          doesCharacterMatchToken(currentTextPos, currentToken)
+        ) {
+          recordStep(
+            currentToken.start,
+            currentTextPos + 1,
+            'match_char',
+            `Quantifier match #${matchedRepetitions + 1}: '${text[currentTextPos]}' matched ${currentToken.raw}`,
+            {
+              token: currentToken,
+              charTested: text[currentTextPos],
+            }
+          );
+          currentTextPos++;
+          matchedRepetitions++;
         }
 
-        if (matchCount >= min) {
-          addStep(nextToken?.end ?? token.end, textPos, 'match_char', `Quantifier satisfied with ${matchCount} matches (required: ${min})`, {
-            token: nextToken ?? token,
-          });
-          tokenIdx += 2; // Skip token + quantifier
+        // Check if we met the minimum required repetitions
+        if (matchedRepetitions >= minCount) {
+          recordStep(
+            nextToken?.end ?? currentToken.end,
+            currentTextPos,
+            'match_char',
+            `Quantifier satisfied: matched ${matchedRepetitions} times (minimum required was ${minCount})`,
+            { token: nextToken ?? currentToken }
+          );
+          // Skip past BOTH the token and its quantifier
+          tokenIndex += 2;
         } else {
-          addStep(token.start, textPos, 'backtrack', `Quantifier unsatisfied! Matched ${matchCount} times, but minimum required is ${min}`, {
-            token: nextToken ?? token,
-            isBacktracking: true,
-          });
-          matched = false;
+          recordStep(
+            currentToken.start,
+            currentTextPos,
+            'backtrack',
+            `Quantifier unsatisfied: matched ${matchedRepetitions} times, but minimum required was ${minCount}`,
+            {
+              token: nextToken ?? currentToken,
+              isBacktracking: true,
+            }
+          );
+          currentAttemptSuccessful = false;
           break;
         }
       }
     }
 
-    if (matched && tokenIdx >= tokens.length) {
-      addStep(pattern.length, textPos, 'success', `Match found! Matched "${text.slice(startPos, textPos)}" at index [${startPos}, ${textPos}]`);
+    // Check if all tokens were successfully matched
+    if (currentAttemptSuccessful && tokenIndex >= tokens.length) {
+      recordStep(
+        pattern.length,
+        currentTextPos,
+        'success',
+        `Match confirmed! Matched "${text.slice(searchStart, currentTextPos)}" at index [${searchStart}, ${currentTextPos}]`
+      );
       matchFound = true;
       break;
     }
   }
 
+  // If entire string was scanned and no match was found
   if (!matchFound) {
-    addStep(pattern.length, text.length, 'fail', `Engine finished: entire input examined, no match was found.`);
+    recordStep(
+      pattern.length,
+      text.length,
+      'fail',
+      'Engine completed: entire input scanned, no match was found'
+    );
   }
 
-  return steps;
+  return recordedSteps;
 }

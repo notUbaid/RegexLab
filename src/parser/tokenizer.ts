@@ -1,500 +1,793 @@
+/**
+ * ============================================================================
+ * RegexLab - Regular Expression Tokenizer (Lexical Analyzer)
+ * ============================================================================
+ * 
+ * Welcome! If you are learning how compilers or interpreters work, this file
+ * is the first step in the parsing pipeline.
+ * 
+ * WHAT DOES A TOKENIZER DO?
+ * A tokenizer takes a raw string of text (like `^[a-z0-9]+$`) and breaks it
+ * down into individual meaningful chunks called "Tokens".
+ * 
+ * For example:
+ * Input pattern: `^cat+`
+ * Output tokens:
+ *   1. `^`  -> Anchor (Start of line)
+ *   2. `c`  -> Literal character 'c'
+ *   3. `a`  -> Literal character 'a'
+ *   4. `t`  -> Literal character 't'
+ *   5. `+`  -> Quantifier (One or more repetitions)
+ * 
+ * This makes it super easy for the rest of our app (the AST visualizer,
+ * the human translator, and the engine simulator) to understand each symbol!
+ */
+
 import { RegexToken, TokenCategory } from '../types/regex';
 
+// ============================================================================
+// CONSTANTS & HELPERS
+// ============================================================================
+
+/** Characters that have special meaning in regular expressions unless escaped */
+const SPECIAL_METACHARACTERS = new Set([
+  '^', '$', '\\', '.', '*', '+', '?', '(', ')', '[', ']', '{', '}', '|'
+]);
+
+/**
+ * Checks whether a character is an ASCII digit (0 through 9).
+ * 
+ * @param char - The single character to test
+ * @returns True if character is between '0' and '9'
+ * 
+ * @example
+ * isAsciiDigit('5') // returns true
+ * isAsciiDigit('a') // returns false
+ */
+function isAsciiDigit(char: string): boolean {
+  return char >= '0' && char <= '9';
+}
+
+// ============================================================================
+// MAIN TOKENIZE FUNCTION
+// ============================================================================
+
+/**
+ * Converts a regular expression string into an array of detailed `RegexToken` objects.
+ * 
+ * @param pattern - The raw regular expression pattern (without slashes or flags)
+ * @returns Array of tokens in the order they appear
+ * 
+ * @example
+ * ```typescript
+ * const tokens = tokenizeRegex('^hello\\d+');
+ * console.log(tokens[0].title); // "Start of String / Line"
+ * console.log(tokens[1].title); // "Literal 'h'"
+ * ```
+ */
 export function tokenizeRegex(pattern: string): RegexToken[] {
+  // Array that will store all the tokens we discover
   const tokens: RegexToken[] = [];
-  let i = 0;
+
+  // Pointer tracking our current character index in the pattern
+  let currentIndex = 0;
+
+  // Counter to assign 1-based IDs to capture groups: Group #1, Group #2, etc.
   let groupCounter = 0;
-  const groupStack: { index: number; name?: string }[] = [];
 
-  while (i < pattern.length) {
-    const char = pattern[i];
+  // Stack keeping track of open groups so we know which group is being closed by ')'
+  const openGroupsStack: Array<{ index: number; name?: string }> = [];
 
-    // Escaped sequences: \d, \w, \s, \b, \., etc.
-    if (char === '\\' && i + 1 < pattern.length) {
-      const next = pattern[i + 1];
-      const start = i;
-      
-      // Unicode property \p{...} or \P{...}
-      if ((next === 'p' || next === 'P') && pattern[i + 2] === '{') {
-        const closeIdx = pattern.indexOf('}', i + 3);
-        if (closeIdx !== -1) {
-          const propName = pattern.slice(i + 3, closeIdx);
-          const raw = pattern.slice(start, closeIdx + 1);
+  // ==========================================================================
+  // SCANNING LOOP: Read through the pattern character-by-character
+  // ==========================================================================
+  while (currentIndex < pattern.length) {
+    const currentChar = pattern[currentIndex];
+    const tokenStartPosition = currentIndex;
+
+    // ------------------------------------------------------------------------
+    // CASE 1: ESCAPE SEQUENCES (Starting with a backslash `\`)
+    // ------------------------------------------------------------------------
+    if (currentChar === '\\' && currentIndex + 1 < pattern.length) {
+      const nextChar = pattern[currentIndex + 1];
+
+      // Subcase 1A: Unicode Property Escape \p{Property} or \P{Property}
+      // Example: \p{Letter} matches letters in any human language!
+      if ((nextChar === 'p' || nextChar === 'P') && pattern[currentIndex + 2] === '{') {
+        const closingBraceIndex = pattern.indexOf('}', currentIndex + 3);
+
+        if (closingBraceIndex !== -1) {
+          const propertyName = pattern.slice(currentIndex + 3, closingBraceIndex);
+          const rawText = pattern.slice(tokenStartPosition, closingBraceIndex + 1);
+          const isPositive = nextChar === 'p';
+
           tokens.push({
-            id: `tok-${start}`,
+            id: `tok-${tokenStartPosition}`,
             category: 'char-class',
-            raw,
-            start,
-            end: closeIdx + 1,
-            title: `Unicode Property (${next === 'p' ? 'matches' : 'negates'})`,
-            humanExplanation: next === 'p' ? `Any character with Unicode property "${propName}"` : `Any character NOT having Unicode property "${propName}"`,
+            raw: rawText,
+            start: tokenStartPosition,
+            end: closingBraceIndex + 1,
+            title: `Unicode Property (${isPositive ? 'matches' : 'negates'})`,
+            humanExplanation: isPositive
+              ? `Any character with Unicode property "${propertyName}"`
+              : `Any character NOT having Unicode property "${propertyName}"`,
+            detail: `Unicode category or script: ${propertyName}`,
           });
-          i = closeIdx + 1;
+
+          // Advance cursor past the closing brace '}'
+          currentIndex = closingBraceIndex + 1;
           continue;
         }
       }
 
-      // Hex \xHH or Unicode \uHHHH
-      if (next === 'x' && i + 3 < pattern.length) {
-        const raw = pattern.slice(start, i + 4);
+      // Subcase 1B: Hexadecimal character \xHH (e.g., \x20 for space)
+      if (nextChar === 'x' && currentIndex + 3 < pattern.length) {
+        const hexDigits = pattern.slice(currentIndex + 2, currentIndex + 4);
+        const rawText = pattern.slice(tokenStartPosition, currentIndex + 4);
+
         tokens.push({
-          id: `tok-${start}`,
+          id: `tok-${tokenStartPosition}`,
           category: 'escape',
-          raw,
-          start,
-          end: i + 4,
-          title: 'Hexadecimal Character',
-          humanExplanation: `Character with hexadecimal ASCII value ${pattern.slice(i + 2, i + 4)}`,
+          raw: rawText,
+          start: tokenStartPosition,
+          end: currentIndex + 4,
+          title: 'Hexadecimal Character Code',
+          humanExplanation: `Character with hexadecimal ASCII value 0x${hexDigits}`,
+          detail: `Hex code \\x${hexDigits}`,
         });
-        i += 4;
-        continue;
-      }
-      if (next === 'u' && i + 5 < pattern.length && pattern[i + 2] !== '{') {
-        const raw = pattern.slice(start, i + 6);
-        tokens.push({
-          id: `tok-${start}`,
-          category: 'escape',
-          raw,
-          start,
-          end: i + 6,
-          title: 'Unicode Character',
-          humanExplanation: `Unicode character U+${pattern.slice(i + 2, i + 6)}`,
-        });
-        i += 6;
+
+        currentIndex += 4;
         continue;
       }
 
-      // Backreferences: \1, \2, or named \k<name>
-      if (/\d/.test(next)) {
+      // Subcase 1C: Unicode character code \uHHHH (e.g., \u0041 for 'A')
+      if (nextChar === 'u' && currentIndex + 5 < pattern.length && pattern[currentIndex + 2] !== '{') {
+        const unicodeDigits = pattern.slice(currentIndex + 2, currentIndex + 6);
+        const rawText = pattern.slice(tokenStartPosition, currentIndex + 6);
+
         tokens.push({
-          id: `tok-${start}`,
+          id: `tok-${tokenStartPosition}`,
+          category: 'escape',
+          raw: rawText,
+          start: tokenStartPosition,
+          end: currentIndex + 6,
+          title: 'Unicode Code Point',
+          humanExplanation: `Unicode character U+${unicodeDigits}`,
+          detail: `Unicode escape \\u${unicodeDigits}`,
+        });
+
+        currentIndex += 6;
+        continue;
+      }
+
+      // Subcase 1D: Numbered Backreferences \1 through \9
+      // Example: `(\w+)\s+\1` finds duplicate words like "the the"
+      if (isAsciiDigit(nextChar)) {
+        tokens.push({
+          id: `tok-${tokenStartPosition}`,
           category: 'backreference',
-          raw: `\\${next}`,
-          start,
-          end: i + 2,
-          title: `Backreference to Group #${next}`,
-          humanExplanation: `Exact text previously matched by capture group #${next}`,
+          raw: `\\${nextChar}`,
+          start: tokenStartPosition,
+          end: currentIndex + 2,
+          title: `Backreference to Group #${nextChar}`,
+          humanExplanation: `Exact text previously matched by capture group #${nextChar}`,
+          detail: `Must equal capture group #${nextChar}`,
         });
-        i += 2;
+
+        currentIndex += 2;
         continue;
       }
-      if (next === 'k' && pattern[i + 2] === '<') {
-        const closeName = pattern.indexOf('>', i + 3);
-        if (closeName !== -1) {
-          const gName = pattern.slice(i + 3, closeName);
+
+      // Subcase 1E: Named Backreferences \k<name>
+      // Example: `(?<tag>\w+)...</\k<tag>>` matches matching HTML tags
+      if (nextChar === 'k' && pattern[currentIndex + 2] === '<') {
+        const closingAngleBracket = pattern.indexOf('>', currentIndex + 3);
+
+        if (closingAngleBracket !== -1) {
+          const groupName = pattern.slice(currentIndex + 3, closingAngleBracket);
+          const rawText = pattern.slice(tokenStartPosition, closingAngleBracket + 1);
+
           tokens.push({
-            id: `tok-${start}`,
+            id: `tok-${tokenStartPosition}`,
             category: 'backreference',
-            raw: pattern.slice(start, closeName + 1),
-            start,
-            end: closeName + 1,
-            title: `Named Backreference: "${gName}"`,
-            humanExplanation: `Exact text previously captured by named group "${gName}"`,
+            raw: rawText,
+            start: tokenStartPosition,
+            end: closingAngleBracket + 1,
+            title: `Named Backreference: "${groupName}"`,
+            humanExplanation: `Exact text previously captured by named group "${groupName}"`,
+            detail: `Refers to group "${groupName}"`,
           });
-          i = closeName + 1;
+
+          currentIndex = closingAngleBracket + 1;
           continue;
         }
       }
 
-      // Shorthand classes & anchors
-      let token: RegexToken | null = null;
-      switch (next) {
+      // Subcase 1F: Common Shorthand Character Classes (\d, \w, \s, etc.)
+      let shorthandToken: RegexToken | null = null;
+
+      switch (nextChar) {
         case 'd':
-          token = { id: `tok-${start}`, category: 'char-class', raw: '\\d', start, end: i + 2, title: 'Digit', humanExplanation: 'Any digit from 0 to 9' };
+          shorthandToken = {
+            id: `tok-${tokenStartPosition}`,
+            category: 'char-class',
+            raw: '\\d',
+            start: tokenStartPosition,
+            end: currentIndex + 2,
+            title: 'Digit [0-9]',
+            humanExplanation: 'Any digit character from 0 to 9',
+            detail: 'Equivalent to [0-9]',
+          };
           break;
+
         case 'D':
-          token = { id: `tok-${start}`, category: 'char-class', raw: '\\D', start, end: i + 2, title: 'Non-Digit', humanExplanation: 'Any character that is NOT a digit (0-9)' };
+          shorthandToken = {
+            id: `tok-${tokenStartPosition}`,
+            category: 'char-class',
+            raw: '\\D',
+            start: tokenStartPosition,
+            end: currentIndex + 2,
+            title: 'Non-Digit [^0-9]',
+            humanExplanation: 'Any character that is NOT a digit',
+            detail: 'Equivalent to [^0-9]',
+          };
           break;
+
         case 'w':
-          token = { id: `tok-${start}`, category: 'char-class', raw: '\\w', start, end: i + 2, title: 'Word Character', humanExplanation: 'Any alphanumeric character or underscore ([a-zA-Z0-9_])' };
+          shorthandToken = {
+            id: `tok-${tokenStartPosition}`,
+            category: 'char-class',
+            raw: '\\w',
+            start: tokenStartPosition,
+            end: currentIndex + 2,
+            title: 'Word Character',
+            humanExplanation: 'Any letter, number, or underscore ([a-zA-Z0-9_])',
+            detail: 'Equivalent to [a-zA-Z0-9_]',
+          };
           break;
+
         case 'W':
-          token = { id: `tok-${start}`, category: 'char-class', raw: '\\W', start, end: i + 2, title: 'Non-Word Character', humanExplanation: 'Any character other than letters, numbers, or underscore' };
+          shorthandToken = {
+            id: `tok-${tokenStartPosition}`,
+            category: 'char-class',
+            raw: '\\W',
+            start: tokenStartPosition,
+            end: currentIndex + 2,
+            title: 'Non-Word Character',
+            humanExplanation: 'Any character other than letters, numbers, or underscore',
+            detail: 'Equivalent to [^a-zA-Z0-9_]',
+          };
           break;
+
         case 's':
-          token = { id: `tok-${start}`, category: 'char-class', raw: '\\s', start, end: i + 2, title: 'Whitespace', humanExplanation: 'Any whitespace (space, tab, newline, carriage return)' };
+          shorthandToken = {
+            id: `tok-${tokenStartPosition}`,
+            category: 'char-class',
+            raw: '\\s',
+            start: tokenStartPosition,
+            end: currentIndex + 2,
+            title: 'Whitespace Character',
+            humanExplanation: 'Any space, tab, newline, or carriage return',
+            detail: 'Matches space, \\t, \\n, \\r, \\f, \\v',
+          };
           break;
+
         case 'S':
-          token = { id: `tok-${start}`, category: 'char-class', raw: '\\S', start, end: i + 2, title: 'Non-Whitespace', humanExplanation: 'Any non-whitespace character' };
+          shorthandToken = {
+            id: `tok-${tokenStartPosition}`,
+            category: 'char-class',
+            raw: '\\S',
+            start: tokenStartPosition,
+            end: currentIndex + 2,
+            title: 'Non-Whitespace Character',
+            humanExplanation: 'Any character that is NOT a space, tab, or newline',
+            detail: 'Matches any non-space character',
+          };
           break;
+
         case 'b':
-          token = { id: `tok-${start}`, category: 'anchor', raw: '\\b', start, end: i + 2, title: 'Word Boundary', humanExplanation: 'Boundary between a word character and a non-word character (zero-width)' };
+          shorthandToken = {
+            id: `tok-${tokenStartPosition}`,
+            category: 'anchor',
+            raw: '\\b',
+            start: tokenStartPosition,
+            end: currentIndex + 2,
+            title: 'Word Boundary (\\b)',
+            humanExplanation: 'Zero-width boundary between a word character and non-word character',
+            detail: 'Asserts position at start or end of a word',
+          };
           break;
+
         case 'B':
-          token = { id: `tok-${start}`, category: 'anchor', raw: '\\B', start, end: i + 2, title: 'Non-Word Boundary', humanExplanation: 'Position that is NOT a word boundary' };
+          shorthandToken = {
+            id: `tok-${tokenStartPosition}`,
+            category: 'anchor',
+            raw: '\\B',
+            start: tokenStartPosition,
+            end: currentIndex + 2,
+            title: 'Non-Word Boundary (\\B)',
+            humanExplanation: 'Position that is NOT a word boundary (inside a word or between spaces)',
+            detail: 'Zero-width negative boundary',
+          };
           break;
+
         case 'n':
-          token = { id: `tok-${start}`, category: 'escape', raw: '\\n', start, end: i + 2, title: 'Line Feed', humanExplanation: 'Newline character (LF)' };
+          shorthandToken = {
+            id: `tok-${tokenStartPosition}`,
+            category: 'escape',
+            raw: '\\n',
+            start: tokenStartPosition,
+            end: currentIndex + 2,
+            title: 'Newline (Line Feed \\n)',
+            humanExplanation: 'Line feed character (ASCII 10)',
+          };
           break;
+
         case 'r':
-          token = { id: `tok-${start}`, category: 'escape', raw: '\\r', start, end: i + 2, title: 'Carriage Return', humanExplanation: 'Carriage return character (CR)' };
+          shorthandToken = {
+            id: `tok-${tokenStartPosition}`,
+            category: 'escape',
+            raw: '\\r',
+            start: tokenStartPosition,
+            end: currentIndex + 2,
+            title: 'Carriage Return (\\r)',
+            humanExplanation: 'Carriage return character (ASCII 13)',
+          };
           break;
+
         case 't':
-          token = { id: `tok-${start}`, category: 'escape', raw: '\\t', start, end: i + 2, title: 'Tab', humanExplanation: 'Horizontal tab character' };
+          shorthandToken = {
+            id: `tok-${tokenStartPosition}`,
+            category: 'escape',
+            raw: '\\t',
+            start: tokenStartPosition,
+            end: currentIndex + 2,
+            title: 'Tab Character (\\t)',
+            humanExplanation: 'Horizontal tab character (ASCII 9)',
+          };
           break;
+
         default:
-          token = { id: `tok-${start}`, category: 'escape', raw: `\\${next}`, start, end: i + 2, title: `Escaped Literal: "${next}"`, humanExplanation: `Literal character "${next}" (escaped special symbol)` };
+          // Any other escaped symbol is treated as an escaped literal (e.g., `\.` or `\\`)
+          shorthandToken = {
+            id: `tok-${tokenStartPosition}`,
+            category: 'escape',
+            raw: `\\${nextChar}`,
+            start: tokenStartPosition,
+            end: currentIndex + 2,
+            title: `Escaped Literal: "${nextChar}"`,
+            humanExplanation: `Matches the literal character "${nextChar}" (escaped to avoid special meaning)`,
+          };
       }
 
-      if (token) {
-        tokens.push(token);
-        i += 2;
+      if (shorthandToken) {
+        tokens.push(shorthandToken);
+        currentIndex += 2;
         continue;
       }
     }
 
-    // Character set: [a-z0-9]
-    if (char === '[') {
-      const start = i;
-      let j = i + 1;
+    // ------------------------------------------------------------------------
+    // CASE 2: BRACKETED CHARACTER CLASS (e.g., `[a-z0-9]` or `[^abc]`)
+    // ------------------------------------------------------------------------
+    if (currentChar === '[') {
+      let scanIndex = currentIndex + 1;
       let isNegated = false;
-      if (pattern[j] === '^') {
+
+      // If the very first character inside `[` is `^`, this set is NEGATED
+      if (pattern[scanIndex] === '^') {
         isNegated = true;
-        j++;
+        scanIndex++;
       }
-      
-      // Find closing bracket, accounting for escaped brackets inside
-      while (j < pattern.length) {
-        if (pattern[j] === '\\') {
-          j += 2;
-        } else if (pattern[j] === ']') {
+
+      // Search for the closing bracket `]`, ignoring any escaped `\]` inside
+      while (scanIndex < pattern.length) {
+        if (pattern[scanIndex] === '\\') {
+          // Skip the escaped character
+          scanIndex += 2;
+        } else if (pattern[scanIndex] === ']') {
           break;
         } else {
-          j++;
+          scanIndex++;
         }
       }
 
-      const end = Math.min(j + 1, pattern.length);
-      const raw = pattern.slice(start, end);
-      const content = pattern.slice(isNegated ? start + 2 : start + 1, end - 1);
+      const tokenEndPosition = Math.min(scanIndex + 1, pattern.length);
+      const rawText = pattern.slice(tokenStartPosition, tokenEndPosition);
+      const innerContent = pattern.slice(
+        isNegated ? tokenStartPosition + 2 : tokenStartPosition + 1,
+        tokenEndPosition - 1
+      );
 
-      let explanation = isNegated 
-        ? `Any character EXCEPT those in the set: [${content}]`
-        : `Any single character within the set: [${content}]`;
+      const explanation = isNegated
+        ? `Any single character EXCEPT those in the set: [${innerContent}]`
+        : `Any single character that matches: [${innerContent}]`;
 
       tokens.push({
-        id: `tok-${start}`,
+        id: `tok-${tokenStartPosition}`,
         category: 'char-class',
-        raw,
-        start,
-        end,
+        raw: rawText,
+        start: tokenStartPosition,
+        end: tokenEndPosition,
         title: isNegated ? 'Negated Character Set' : 'Character Set',
         humanExplanation: explanation,
-        detail: `Matches ${isNegated ? 'none' : 'one'} of: ${content}`,
+        detail: `Matches ${isNegated ? 'none' : 'one'} of: ${innerContent}`,
       });
 
-      i = end;
+      currentIndex = tokenEndPosition;
       continue;
     }
 
-    // Group Open: (, (?:, (?<name>, (?=, (?!, (?<=, (?<!
-    if (char === '(') {
-      const start = i;
-      if (pattern.startsWith('(?:', i)) {
+    // ------------------------------------------------------------------------
+    // CASE 3: GROUPS & LOOKAROUNDS (Starting with `(`)
+    // ------------------------------------------------------------------------
+    if (currentChar === '(') {
+      // 3A: Non-capturing group `(?:...)`
+      if (pattern.startsWith('(?:', currentIndex)) {
         tokens.push({
-          id: `tok-${start}`,
+          id: `tok-${tokenStartPosition}`,
           category: 'group-open',
           raw: '(?:',
-          start,
-          end: i + 3,
+          start: tokenStartPosition,
+          end: currentIndex + 3,
           title: 'Non-Capturing Group (Start)',
-          humanExplanation: 'Groups elements together without creating a numbered capture group',
+          humanExplanation: 'Groups patterns together for quantifiers without saving memory for capture',
+          detail: 'Non-capturing container',
         });
-        groupStack.push({ index: -1 });
-        i += 3;
+        openGroupsStack.push({ index: -1 });
+        currentIndex += 3;
         continue;
       }
-      if (pattern.startsWith('(?=', i)) {
+
+      // 3B: Positive Lookahead `(?=...)`
+      if (pattern.startsWith('(?=', currentIndex)) {
         tokens.push({
-          id: `tok-${start}`,
+          id: `tok-${tokenStartPosition}`,
           category: 'lookaround',
           raw: '(?=',
-          start,
-          end: i + 3,
+          start: tokenStartPosition,
+          end: currentIndex + 3,
           title: 'Positive Lookahead (Start)',
-          humanExplanation: 'Asserter: asserts what follows immediately matches this pattern (zero-width)',
+          humanExplanation: 'Asserts that the text following matches this pattern (does not consume characters)',
+          detail: 'Zero-width forward lookahead assertion',
         });
-        groupStack.push({ index: -1 });
-        i += 3;
+        openGroupsStack.push({ index: -1 });
+        currentIndex += 3;
         continue;
       }
-      if (pattern.startsWith('(?!', i)) {
+
+      // 3C: Negative Lookahead `(?!...)`
+      if (pattern.startsWith('(?!', currentIndex)) {
         tokens.push({
-          id: `tok-${start}`,
+          id: `tok-${tokenStartPosition}`,
           category: 'lookaround',
           raw: '(?!',
-          start,
-          end: i + 3,
+          start: tokenStartPosition,
+          end: currentIndex + 3,
           title: 'Negative Lookahead (Start)',
-          humanExplanation: 'Asserter: asserts what follows does NOT match this pattern (zero-width)',
+          humanExplanation: 'Asserts that the text following does NOT match this pattern (does not consume characters)',
+          detail: 'Zero-width negative forward lookahead',
         });
-        groupStack.push({ index: -1 });
-        i += 3;
+        openGroupsStack.push({ index: -1 });
+        currentIndex += 3;
         continue;
       }
-      if (pattern.startsWith('(?<=', i)) {
+
+      // 3D: Positive Lookbehind `(?<=...)`
+      if (pattern.startsWith('(?<=', currentIndex)) {
         tokens.push({
-          id: `tok-${start}`,
+          id: `tok-${tokenStartPosition}`,
           category: 'lookaround',
           raw: '(?<=',
-          start,
-          end: i + 4,
+          start: tokenStartPosition,
+          end: currentIndex + 4,
           title: 'Positive Lookbehind (Start)',
-          humanExplanation: 'Asserter: asserts what precedes immediately matches this pattern (zero-width)',
+          humanExplanation: 'Asserts that the text preceding matches this pattern (does not consume characters)',
+          detail: 'Zero-width backward lookbehind assertion',
         });
-        groupStack.push({ index: -1 });
-        i += 4;
+        openGroupsStack.push({ index: -1 });
+        currentIndex += 4;
         continue;
       }
-      if (pattern.startsWith('(?<!', i)) {
+
+      // 3E: Negative Lookbehind `(?<!...)`
+      if (pattern.startsWith('(?<!', currentIndex)) {
         tokens.push({
-          id: `tok-${start}`,
+          id: `tok-${tokenStartPosition}`,
           category: 'lookaround',
           raw: '(?<!',
-          start,
-          end: i + 4,
+          start: tokenStartPosition,
+          end: currentIndex + 4,
           title: 'Negative Lookbehind (Start)',
-          humanExplanation: 'Asserter: asserts what precedes does NOT match this pattern (zero-width)',
+          humanExplanation: 'Asserts that the text preceding does NOT match this pattern (does not consume characters)',
+          detail: 'Zero-width negative backward lookbehind',
         });
-        groupStack.push({ index: -1 });
-        i += 4;
+        openGroupsStack.push({ index: -1 });
+        currentIndex += 4;
         continue;
       }
-      if (pattern.startsWith('(?<', i)) {
-        const closeName = pattern.indexOf('>', i + 3);
-        if (closeName !== -1) {
-          const name = pattern.slice(i + 3, closeName);
+
+      // 3F: Named Capturing Group `(?<name>...)`
+      if (pattern.startsWith('(?<', currentIndex)) {
+        const closingAngleBracket = pattern.indexOf('>', currentIndex + 3);
+
+        if (closingAngleBracket !== -1) {
+          const groupName = pattern.slice(currentIndex + 3, closingAngleBracket);
           groupCounter++;
-          const gIndex = groupCounter;
+          const currentGroupIndex = groupCounter;
+
           tokens.push({
-            id: `tok-${start}`,
+            id: `tok-${tokenStartPosition}`,
             category: 'group-open',
-            raw: pattern.slice(start, closeName + 1),
-            start,
-            end: closeName + 1,
-            title: `Named Capture Group "${name}" (#${gIndex})`,
-            humanExplanation: `Captures matching text and assigns it to name "${name}"`,
-            groupIndex: gIndex,
-            groupName: name,
+            raw: pattern.slice(tokenStartPosition, closingAngleBracket + 1),
+            start: tokenStartPosition,
+            end: closingAngleBracket + 1,
+            title: `Named Capture Group "${groupName}" (#${currentGroupIndex})`,
+            humanExplanation: `Captures matched text into named variable "${groupName}"`,
+            groupIndex: currentGroupIndex,
+            groupName,
+            detail: `Stores text into groups.${groupName}`,
           });
-          groupStack.push({ index: gIndex, name });
-          i = closeName + 1;
+
+          openGroupsStack.push({ index: currentGroupIndex, name: groupName });
+          currentIndex = closingAngleBracket + 1;
           continue;
         }
       }
 
-      // Normal capturing group
+      // 3G: Standard Numbered Capturing Group `(...)`
       groupCounter++;
-      const currentGIndex = groupCounter;
+      const currentGroupNumber = groupCounter;
+
       tokens.push({
-        id: `tok-${start}`,
+        id: `tok-${tokenStartPosition}`,
         category: 'group-open',
         raw: '(',
-        start,
-        end: i + 1,
-        title: `Capture Group #${currentGIndex} (Start)`,
-        humanExplanation: `Captures matched text into group #${currentGIndex}`,
-        groupIndex: currentGIndex,
+        start: tokenStartPosition,
+        end: currentIndex + 1,
+        title: `Capture Group #${currentGroupNumber} (Start)`,
+        humanExplanation: `Saves the matched text into group variable #${currentGroupNumber}`,
+        groupIndex: currentGroupNumber,
+        detail: `Capture Group #${currentGroupNumber}`,
       });
-      groupStack.push({ index: currentGIndex });
-      i++;
+
+      openGroupsStack.push({ index: currentGroupNumber });
+      currentIndex++;
       continue;
     }
 
-    // Group Close: )
-    if (char === ')') {
-      const closed = groupStack.pop();
+    // ------------------------------------------------------------------------
+    // CASE 4: GROUP CLOSING PARENTHESIS `)`
+    // ------------------------------------------------------------------------
+    if (currentChar === ')') {
+      const closedGroup = openGroupsStack.pop();
+
       tokens.push({
-        id: `tok-${i}`,
+        id: `tok-${currentIndex}`,
         category: 'group-close',
         raw: ')',
-        start: i,
-        end: i + 1,
-        title: closed && closed.index > 0 ? `Capture Group #${closed.index} (End)` : 'Group End',
-        humanExplanation: closed && closed.index > 0 ? `Closes capture group #${closed.index}` : 'Closes group',
-        groupIndex: closed?.index,
-        groupName: closed?.name,
+        start: currentIndex,
+        end: currentIndex + 1,
+        title: closedGroup && closedGroup.index > 0
+          ? `Capture Group #${closedGroup.index} (End)`
+          : 'Group End',
+        humanExplanation: closedGroup && closedGroup.index > 0
+          ? `Ends capture group #${closedGroup.index}`
+          : 'Closes group',
+        groupIndex: closedGroup?.index,
+        groupName: closedGroup?.name,
       });
-      i++;
+
+      currentIndex++;
       continue;
     }
 
-    // Quantifiers: *, +, ?, {n}, {n,m}, {n,} with optional ? or + modifier
-    if (char === '*' || char === '+' || char === '?') {
-      const start = i;
-      let raw = char;
+    // ------------------------------------------------------------------------
+    // CASE 5: QUANTIFIERS (*, +, ?, and {min,max})
+    // ------------------------------------------------------------------------
+    if (currentChar === '*' || currentChar === '+' || currentChar === '?') {
+      let rawText = currentChar;
       let isLazy = false;
       let isPossessive = false;
-      
-      if (i + 1 < pattern.length && pattern[i + 1] === '?') {
+
+      // Check for Lazy modifier: e.g., `*?` or `+?`
+      if (currentIndex + 1 < pattern.length && pattern[currentIndex + 1] === '?') {
         isLazy = true;
-        raw += '?';
-        i++;
-      } else if (i + 1 < pattern.length && pattern[i + 1] === '+') {
+        rawText += '?';
+        currentIndex++;
+      }
+      // Check for Possessive modifier: e.g., `*+` or `++`
+      else if (currentIndex + 1 < pattern.length && pattern[currentIndex + 1] === '+') {
         isPossessive = true;
-        raw += '+';
-        i++;
+        rawText += '+';
+        currentIndex++;
       }
 
-      let title = '';
-      let explanation = '';
-      let min = 0;
-      let max: number | null = null;
+      let quantifierTitle = '';
+      let quantifierExplanation = '';
+      let minRepetitions = 0;
+      let maxRepetitions: number | null = null;
 
-      if (char === '*') {
-        min = 0;
-        max = null;
-        title = `Zero or More (${isLazy ? 'Lazy' : isPossessive ? 'Possessive' : 'Greedy'})`;
-        explanation = `Matches 0 or more times (${isLazy ? 'fewest possible' : 'as many as possible'})`;
-      } else if (char === '+') {
-        min = 1;
-        max = null;
-        title = `One or More (${isLazy ? 'Lazy' : isPossessive ? 'Possessive' : 'Greedy'})`;
-        explanation = `Matches 1 or more times (${isLazy ? 'fewest possible' : 'as many as possible'})`;
-      } else if (char === '?') {
-        min = 0;
-        max = 1;
-        title = `Optional (${isLazy ? 'Lazy' : isPossessive ? 'Possessive' : 'Greedy'})`;
-        explanation = `Matches 0 or 1 time (optional element)`;
+      if (currentChar === '*') {
+        minRepetitions = 0;
+        maxRepetitions = null; // Infinite
+        quantifierTitle = `Zero or More (${isLazy ? 'Lazy' : isPossessive ? 'Possessive' : 'Greedy'})`;
+        quantifierExplanation = `Matches 0 or more times (${isLazy ? 'stops at shortest match' : 'matches as many as possible'})`;
+      } else if (currentChar === '+') {
+        minRepetitions = 1;
+        maxRepetitions = null; // Infinite
+        quantifierTitle = `One or More (${isLazy ? 'Lazy' : isPossessive ? 'Possessive' : 'Greedy'})`;
+        quantifierExplanation = `Matches 1 or more times (${isLazy ? 'stops at shortest match' : 'matches as many as possible'})`;
+      } else if (currentChar === '?') {
+        minRepetitions = 0;
+        maxRepetitions = 1;
+        quantifierTitle = `Optional (${isLazy ? 'Lazy' : isPossessive ? 'Possessive' : 'Greedy'})`;
+        quantifierExplanation = `Matches 0 or 1 time (optional element)`;
       }
 
       tokens.push({
-        id: `tok-${start}`,
+        id: `tok-${tokenStartPosition}`,
         category: 'quantifier',
-        raw,
-        start,
-        end: i + 1,
-        title,
-        humanExplanation: explanation,
-        quantifier: { min, max, isLazy, isPossessive },
+        raw: rawText,
+        start: tokenStartPosition,
+        end: currentIndex + 1,
+        title: quantifierTitle,
+        humanExplanation: quantifierExplanation,
+        quantifier: {
+          min: minRepetitions,
+          max: maxRepetitions,
+          isLazy,
+          isPossessive,
+        },
       });
-      i++;
+
+      currentIndex++;
       continue;
     }
 
-    // Range quantifier: {min,max}
-    if (char === '{' && /\{\d+(?:,\d*)?\}/.test(pattern.slice(i))) {
-      const closeCurly = pattern.indexOf('}', i);
-      if (closeCurly !== -1) {
-        const start = i;
-        let raw = pattern.slice(start, closeCurly + 1);
-        let endIdx = closeCurly + 1;
+    // Range quantifier: `{n}`, `{min,max}`, or `{min,}`
+    if (currentChar === '{' && /\{\d+(?:,\d*)?\}/.test(pattern.slice(currentIndex))) {
+      const closingBrace = pattern.indexOf('}', currentIndex);
+
+      if (closingBrace !== -1) {
+        let rawText = pattern.slice(tokenStartPosition, closingBrace + 1);
+        let endPosition = closingBrace + 1;
         let isLazy = false;
         let isPossessive = false;
 
-        if (endIdx < pattern.length && pattern[endIdx] === '?') {
+        // Check for lazy or possessive modifiers
+        if (endPosition < pattern.length && pattern[endPosition] === '?') {
           isLazy = true;
-          raw += '?';
-          endIdx++;
-        } else if (endIdx < pattern.length && pattern[endIdx] === '+') {
+          rawText += '?';
+          endPosition++;
+        } else if (endPosition < pattern.length && pattern[endPosition] === '+') {
           isPossessive = true;
-          raw += '+';
-          endIdx++;
+          rawText += '+';
+          endPosition++;
         }
 
-        const inner = pattern.slice(start + 1, closeCurly);
-        const parts = inner.split(',');
-        let min = parseInt(parts[0], 10);
-        let max: number | null = min;
-        let explanation = '';
+        const innerNumbers = pattern.slice(tokenStartPosition + 1, closingBrace);
+        const numberParts = innerNumbers.split(',');
+        const minCount = parseInt(numberParts[0], 10);
+        let maxCount: number | null = minCount;
+        let explanationText = '';
 
-        if (parts.length === 2) {
-          max = parts[1] === '' ? null : parseInt(parts[1], 10);
-          if (max === null) {
-            explanation = `Matches at least ${min} times (${isLazy ? 'lazy' : 'greedy'})`;
+        if (numberParts.length === 2) {
+          maxCount = numberParts[1] === '' ? null : parseInt(numberParts[1], 10);
+          if (maxCount === null) {
+            explanationText = `Matches at least ${minCount} times (${isLazy ? 'lazy' : 'greedy'})`;
           } else {
-            explanation = `Matches between ${min} and ${max} times (${isLazy ? 'lazy' : 'greedy'})`;
+            explanationText = `Matches between ${minCount} and ${maxCount} times (${isLazy ? 'lazy' : 'greedy'})`;
           }
         } else {
-          explanation = `Matches exactly ${min} times`;
+          explanationText = `Matches exactly ${minCount} times`;
         }
 
         tokens.push({
-          id: `tok-${start}`,
+          id: `tok-${tokenStartPosition}`,
           category: 'quantifier',
-          raw,
-          start,
-          end: endIdx,
-          title: `Quantifier ${raw}`,
-          humanExplanation: explanation,
-          quantifier: { min, max, isLazy, isPossessive },
+          raw: rawText,
+          start: tokenStartPosition,
+          end: endPosition,
+          title: `Quantifier ${rawText}`,
+          humanExplanation: explanationText,
+          quantifier: {
+            min: minCount,
+            max: maxCount,
+            isLazy,
+            isPossessive,
+          },
         });
 
-        i = endIdx;
+        currentIndex = endPosition;
         continue;
       }
     }
 
-    // Anchors: ^ and $
-    if (char === '^') {
+    // ------------------------------------------------------------------------
+    // CASE 6: ANCHORS (^ and $)
+    // ------------------------------------------------------------------------
+    if (currentChar === '^') {
       tokens.push({
-        id: `tok-${i}`,
+        id: `tok-${currentIndex}`,
         category: 'anchor',
         raw: '^',
-        start: i,
-        end: i + 1,
-        title: 'Start of String / Line',
-        humanExplanation: 'Asserts position at the beginning of the string (or line with multi-line flag)',
+        start: currentIndex,
+        end: currentIndex + 1,
+        title: 'Start of String / Line (^)',
+        humanExplanation: 'Asserts position at the beginning of the string (or beginning of a line with /m flag)',
+        detail: 'Zero-width anchor at start of input',
       });
-      i++;
+      currentIndex++;
       continue;
     }
 
-    if (char === '$') {
+    if (currentChar === '$') {
       tokens.push({
-        id: `tok-${i}`,
+        id: `tok-${currentIndex}`,
         category: 'anchor',
         raw: '$',
-        start: i,
-        end: i + 1,
-        title: 'End of String / Line',
-        humanExplanation: 'Asserts position at the end of the string (or line with multi-line flag)',
+        start: currentIndex,
+        end: currentIndex + 1,
+        title: 'End of String / Line ($)',
+        humanExplanation: 'Asserts position at the end of the string (or end of a line with /m flag)',
+        detail: 'Zero-width anchor at end of input',
       });
-      i++;
+      currentIndex++;
       continue;
     }
 
-    // Alternation: |
-    if (char === '|') {
+    // ------------------------------------------------------------------------
+    // CASE 7: ALTERNATION (Pipe `|`)
+    // ------------------------------------------------------------------------
+    if (currentChar === '|') {
       tokens.push({
-        id: `tok-${i}`,
+        id: `tok-${currentIndex}`,
         category: 'alternation',
         raw: '|',
-        start: i,
-        end: i + 1,
-        title: 'OR Operator (Alternation)',
-        humanExplanation: 'Matches either the pattern before or the pattern after this bar',
+        start: currentIndex,
+        end: currentIndex + 1,
+        title: 'OR Operator (Alternation |)',
+        humanExplanation: 'Acts like a logical OR: matches either the pattern on the left OR on the right',
+        detail: 'Branching choice separator',
       });
-      i++;
+      currentIndex++;
       continue;
     }
 
-    // Dot: .
-    if (char === '.') {
+    // ------------------------------------------------------------------------
+    // CASE 8: WILDCARD DOT (`.`)
+    // ------------------------------------------------------------------------
+    if (currentChar === '.') {
       tokens.push({
-        id: `tok-${i}`,
+        id: `tok-${currentIndex}`,
         category: 'char-class',
         raw: '.',
-        start: i,
-        end: i + 1,
-        title: 'Any Character (Wildcard)',
-        humanExplanation: 'Matches any single character except line terminators (includes line breaks with dotAll /s flag)',
+        start: currentIndex,
+        end: currentIndex + 1,
+        title: 'Any Character Wildcard (.)',
+        humanExplanation: 'Matches any single character except newlines (matches newlines too if /s dotAll flag is set)',
+        detail: 'Universal wildcard character',
       });
-      i++;
+      currentIndex++;
       continue;
     }
 
-    // Plain Literal Character
+    // ------------------------------------------------------------------------
+    // CASE 9: PLAIN LITERAL CHARACTER
+    // ------------------------------------------------------------------------
     tokens.push({
-      id: `tok-${i}`,
+      id: `tok-${currentIndex}`,
       category: 'literal',
-      raw: char,
-      start: i,
-      end: i + 1,
-      title: `Literal "${char}"`,
-      humanExplanation: `Matches the exact character "${char}"`,
+      raw: currentChar,
+      start: currentIndex,
+      end: currentIndex + 1,
+      title: `Literal "${currentChar}"`,
+      humanExplanation: `Matches the exact character "${currentChar}"`,
+      detail: `Exact character match (ASCII: ${currentChar.charCodeAt(0)})`,
     });
-    i++;
+
+    currentIndex++;
   }
 
   return tokens;
