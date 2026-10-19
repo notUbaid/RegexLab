@@ -172,23 +172,14 @@ export const VisualBuilder: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <div className="max-w-[1120px] mx-auto px-6 sm:px-10 pt-4 pb-24 space-y-10">
       {/* Top Header Card */}
       <DoubleBezelCard innerClassName="p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider">
-              No-Code Builder
-            </span>
-            <span className="text-xs text-foreground/60 flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-primary" />
-              Easy Block Builder
-            </span>
-          </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
+          <h1 className="text-[34px] leading-none font-semibold tracking-[-0.03em] text-foreground">
             Build Regex with Blocks
           </h1>
-          <p className="text-xs text-foreground/70 mt-0.5">
+          <p className="text-[15px] text-foreground-muted mt-3 max-w-xl leading-snug">
             Click blocks to build your regex piece by piece without needing to memorize tricky symbols.
           </p>
         </div>
@@ -216,7 +207,7 @@ export const VisualBuilder: React.FC = () => {
       {/* Compiled Pattern Live Preview Banner */}
       <DoubleBezelCard innerClassName="p-4 bg-primary/5 border-primary/20 space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wider text-primary flex items-center gap-1.5">
+          <span className="text-xs font-semibold text-primary flex items-center gap-1.5">
             <ShieldCheck className="w-4 h-4" />
             Your Resulting Regex Pattern
           </span>
@@ -269,7 +260,7 @@ export const VisualBuilder: React.FC = () => {
                           <h4 className="text-sm font-bold text-foreground capitalize">
                             {block.type.replace(/_/g, ' ')}
                           </h4>
-                          <span className="text-[11px] text-foreground/60 font-mono">
+                          <span className="text-xs text-foreground/60 font-mono">
                             {BLOCK_PRESETS.find(p => p.type === block.type)?.description}
                           </span>
                         </div>
@@ -308,7 +299,7 @@ export const VisualBuilder: React.FC = () => {
                       {/* Custom Value Input */}
                       {hasValue && (
                         <div>
-                          <label className="text-[11px] font-semibold text-foreground/70 block mb-1">
+                          <label className="text-xs font-semibold text-foreground/70 block mb-1">
                             Matching Characters / Text
                           </label>
                           <input
@@ -324,7 +315,7 @@ export const VisualBuilder: React.FC = () => {
                       {/* Quantifier Selector */}
                       {canQuantify && (
                         <div>
-                          <label className="text-[11px] font-semibold text-foreground/70 block mb-1">
+                          <label className="text-xs font-semibold text-foreground/70 block mb-1">
                             Frequency / Repetition
                           </label>
                           <select
@@ -346,7 +337,7 @@ export const VisualBuilder: React.FC = () => {
                       {canQuantify && (block.quantifier === 'exact' || block.quantifier === 'range') && (
                         <div className="flex items-center gap-2">
                           <div className="flex-1">
-                            <label className="text-[11px] font-semibold text-foreground/70 block mb-1">
+                            <label className="text-xs font-semibold text-foreground/70 block mb-1">
                               Min Count
                             </label>
                             <input
@@ -359,7 +350,7 @@ export const VisualBuilder: React.FC = () => {
                           </div>
                           {block.quantifier === 'range' && (
                             <div className="flex-1">
-                              <label className="text-[11px] font-semibold text-foreground/70 block mb-1">
+                              <label className="text-xs font-semibold text-foreground/70 block mb-1">
                                 Max Count
                               </label>
                               <input
@@ -393,7 +384,7 @@ export const VisualBuilder: React.FC = () => {
                               value={block.groupName || ''}
                               onChange={(e) => updateBuilderBlock(block.id, { groupName: e.target.value })}
                               placeholder="Group name (optional)"
-                              className="mt-1 px-2 py-1 rounded bg-background border border-border text-[11px] font-mono text-foreground"
+                              className="mt-1 px-2 py-1 rounded bg-background border border-border text-xs font-mono text-foreground"
                             />
                           )}
                         </div>
@@ -411,7 +402,7 @@ export const VisualBuilder: React.FC = () => {
           {/* Block Palette */}
           <DoubleBezelCard innerClassName="p-5 space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-border">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+              <h3 className="text-xs font-bold text-foreground flex items-center gap-2">
                 <Plus className="w-4 h-4 text-primary" />
                 Add Pattern Block
               </h3>
@@ -432,7 +423,7 @@ export const VisualBuilder: React.FC = () => {
                       <div className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">
                         {preset.label}
                       </div>
-                      <div className="text-[10px] text-foreground/60 truncate max-w-[170px]">
+                      <div className="text-[11px] text-foreground/60 truncate max-w-[170px]">
                         {preset.description}
                       </div>
                     </div>
@@ -445,7 +436,7 @@ export const VisualBuilder: React.FC = () => {
 
           {/* Live Explanation of Built Regex */}
           <DoubleBezelCard innerClassName="p-5 space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2 pb-2 border-b border-border">
+            <h3 className="text-xs font-bold text-foreground flex items-center gap-2 pb-2 border-b border-border">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               Live English Explanation
             </h3>
@@ -459,7 +450,7 @@ export const VisualBuilder: React.FC = () => {
                     key={block.id}
                     className="p-2 rounded-lg bg-card border border-border/60 text-xs flex items-start gap-2"
                   >
-                    <span className="w-4 h-4 rounded bg-primary/10 text-primary font-mono text-[10px] flex items-center justify-center font-bold mt-0.5 shrink-0">
+                    <span className="w-4 h-4 rounded bg-primary/10 text-primary font-mono text-[11px] flex items-center justify-center font-bold mt-0.5 shrink-0">
                       {idx + 1}
                     </span>
                     <div>

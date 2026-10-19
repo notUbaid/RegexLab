@@ -33,10 +33,10 @@ export const ReplacePreview: React.FC = () => {
   ];
 
   return (
-    <div className="p-4 rounded-2xl bg-surface-subtle border border-border-subtle space-y-3">
+    <div className="p-4 rounded-xl bg-surface-subtle border border-border-subtle space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <label className="text-xs font-semibold uppercase tracking-wider text-foreground-muted flex items-center gap-1.5">
+        <label className="text-xs font-semibold text-foreground-muted flex items-center gap-1.5">
           <RefreshCw className="w-3.5 h-3.5 text-primary" /> Regex Substitution / Replace Sandbox
         </label>
         <button
@@ -45,7 +45,7 @@ export const ReplacePreview: React.FC = () => {
           title="Copy replaced text"
         >
           {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-          <span className="text-[11px]">{copied ? 'Copied' : 'Copy Result'}</span>
+          <span className="text-xs">{copied ? 'Copied' : 'Copy Result'}</span>
         </button>
       </div>
 
@@ -69,7 +69,7 @@ export const ReplacePreview: React.FC = () => {
               key={p.label}
               onClick={() => setReplacementText(replacementText + p.val)}
               title={p.title}
-              className="px-2 py-1 rounded-lg bg-surface hover:bg-primary/20 text-foreground-muted hover:text-primary text-[10px] font-mono border border-border-subtle transition-colors"
+              className="px-2 py-1 rounded-lg bg-surface hover:bg-primary/20 text-foreground-muted hover:text-primary text-[11px] font-mono border border-border-subtle transition-colors"
             >
               {p.label}
             </button>
@@ -79,7 +79,7 @@ export const ReplacePreview: React.FC = () => {
 
       {/* Replaced Live Output Box */}
       <div className="rounded-xl bg-muted/50 border border-border/80 p-3 max-h-36 overflow-y-auto">
-        <div className="text-[10px] font-semibold uppercase tracking-wider text-foreground-dim mb-1 flex items-center gap-1">
+        <div className="text-[11px] font-semibold text-foreground-dim mb-1 flex items-center gap-1">
           <Sparkles className="w-3 h-3 text-primary" /> Transformed Output:
         </div>
         <pre className="font-mono text-xs text-foreground whitespace-pre-wrap break-all leading-relaxed">

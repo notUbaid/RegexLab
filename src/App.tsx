@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRegexStore } from './store/useRegexStore';
 import { Header } from './components/common/Header';
+import { Sidebar } from './components/common/Sidebar';
 import { ShareModal } from './components/common/ShareModal';
 import { CheatSheetModal } from './components/common/CheatSheetModal';
 import { LandingHero } from './components/landing/LandingHero';
@@ -14,7 +15,6 @@ import { CompatibilityView } from './components/compatibility/CompatibilityView'
 import { PatternLibraryView } from './components/library/PatternLibraryView';
 import { PatternCompareView } from './components/compare/PatternCompareView';
 import { ChallengesView } from './components/challenges/ChallengesView';
-import { Sparkles, Terminal, Heart, Code2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const App: React.FC = () => {
@@ -51,7 +51,7 @@ export const App: React.FC = () => {
         return <LandingHero />;
       case 'playground':
         return (
-          <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="max-w-[1120px] mx-auto px-6 sm:px-10 pt-4 pb-24">
             <PlaygroundView />
           </div>
         );
@@ -75,7 +75,7 @@ export const App: React.FC = () => {
         return <ChallengesView />;
       default:
         return (
-          <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="max-w-[1120px] mx-auto px-6 sm:px-10 pt-4 pb-24">
             <PlaygroundView />
           </div>
         );
@@ -83,48 +83,18 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-300">
-      {/* Global Application Header */}
-      <Header
-        onOpenShare={() => setIsShareOpen(true)}
-        onOpenCheatSheet={() => setIsCheatSheetOpen(true)}
-      />
-
-      {/* Main Content Area with Spring Transitions */}
-      <main className="flex-1 relative overflow-x-hidden">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeView}
-            initial={{ opacity: 0, y: 14, filter: 'blur(6px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: -10, filter: 'blur(6px)' }}
-            transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
-          >
-            {renderActiveView()}
-          </motion.div>
-        </AnimatePresence>
-      </main>
-
-      {/* Modern Minimal Footer */}
-      <footer className="border-t border-border-subtle bg-surface/60 py-6 mt-12 transition-colors">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-foreground/60">
-          <div className="flex items-center gap-2">
-            <span className="font-bold tracking-tight text-foreground flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-primary" />
-              RegexLab
-            </span>
-            <span className="text-foreground/40">|</span>
-            <span>The Visual Regular Expression Laboratory</span>
-          </div>
-
-          <div className="flex items-center gap-4 text-foreground/50">
-            <span className="font-mono text-[11px] hidden md:inline">
-              <kbd className="px-1.5 py-0.5 rounded bg-muted border border-border text-[10px]">Ctrl</kbd> + <kbd className="px-1.5 py-0.5 rounded bg-muted border border-border text-[10px]">K</kbd> Quick Reference
-            </span>
-            <span>Zero-tracking | Runs 100% Client-Side</span>
-          </div>
-        </div>
-      </footer>
+    <div className="min-h-screen flex flex-col lg:flex-row bg-background text-foreground">
+      <Sidebar onOpenCheatSheet={() => setIsCheatSheetOpen(true)} />
+      <div className="flex-1 min-w-0 flex flex-col">
+        <Header onOpenShare={() => setIsShareOpen(true)} onOpenCheatSheet={() => setIsCheatSheetOpen(true)} />
+        <main className="flex-1 relative overflow-x-hidden">
+          <AnimatePresence mode="wait">
+            <motion.div key={activeView} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.12 }}>
+              {renderActiveView()}
+            </motion.div>
+          </AnimatePresence>
+        </main>
+      </div>
 
       {/* Modals & Drawers */}
       <ShareModal

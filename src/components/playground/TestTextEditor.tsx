@@ -1,187 +1,104 @@
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { useRegexStore } from '../../store/useRegexStore';
 import { RegexMatch } from '../../types/regex';
-import { FileText, Clock, Hash, CheckCircle2 } from 'lucide-react';
 
+const LH = 26, PAD = 18, MIN_ROWS = 9;
+
+/** The sheet: ruled lines, a number gutter, and a margin where each match is annotated on its own line. */
 export const TestTextEditor: React.FC = () => {
   const { testText, setTestText, getMatches, hoveredGroupIndex, setHoveredGroupIndex } = useRegexStore();
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const backdropRef = useRef<HTMLDivElement>(null);
+  const taRef = useRef<HTMLTextAreaElement>(null);
+  const bgRef = useRef<HTMLDivElement>(null);
+  const a = getMatches();
 
-  const analysis = getMatches();
+  const lineStarts = useMemo(() => { const s = [0]; for (let i = 0; i < testText.length; i++) if (testText[i] === '\n') s.push(i + 1); return s; }, [testText]);
+  const lineOf = (pos: number) => { let lo = 0, hi = lineStarts.length - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (lineStarts[m] <= pos) lo = m; else hi = m - 1; } return lo; };
+  const rows = Math.max(lineStarts.length, MIN_ROWS);
+  const H = rows * LH + PAD * 2;
 
-  const handleScroll = () => {
-    if (textareaRef.current && backdropRef.current) {
-      backdropRef.current.scrollTop = textareaRef.current.scrollTop;
-      backdropRef.current.scrollLeft = textareaRef.current.scrollLeft;
-    }
-  };
+  const notes = useMemo(() => {
+    const byLine = new Map<number, { n: number; m: RegexMatch }[]>();
+    if (a.isValid) a.matches.forEach((m: RegexMatch, i: number) => { if (m.end > m.start) { const l = lineOf(m.start); byLine.set(l, [...(byLine.get(l) ?? []), { n: i + 1, m }]); } });
+    return [...byLine.entries()];
+  }, [a, lineStarts]);
 
-  /**
-   * Renders the highlighted HTML overlay behind the textarea.
-   * Chunks text into un-matched sections and matched sections with group tags.
-   */
-  const renderHighlights = () => {
-    if (!analysis.isValid || analysis.matches.length === 0 || !testText) {
-      return <span>{testText}</span>;
-    }
+  const groupCount = useMemo(() => { let x = 0; a.matches.forEach((m: RegexMatch) => m.groups.forEach((g) => { x = Math.max(x, g.index); })); return Math.min(x, 7); }, [a]);
 
-    const segments: React.ReactNode[] = [];
-    let lastIndex = 0;
-
-    analysis.matches.forEach((match: RegexMatch, mIdx: number) => {
-      // Any text prior to this match
-      if (match.start > lastIndex) {
-        segments.push(
-          <span key={`text-${lastIndex}`}>{testText.slice(lastIndex, match.start)}</span>
-        );
-      }
-
-      // Check if this match has sub-groups
-      if (match.groups.length > 0) {
-        let groupLastIndex = match.start;
-        const groupElements: React.ReactNode[] = [];
-
-        match.groups.forEach((group, gIdx) => {
-          if (group.start > groupLastIndex) {
-            groupElements.push(
-              <span key={`g-inter-${groupLastIndex}`}>
-                {testText.slice(groupLastIndex, group.start)}
-              </span>
-            );
-          }
-
-          const isHovered = hoveredGroupIndex === group.index;
-          const groupColorClass = `group-highlight-${group.index % 8}`;
-
-          groupElements.push(
-            <mark
-              key={`grp-${mIdx}-${gIdx}`}
-              className={`rounded-none font-mono transition-all text-transparent ${groupColorClass} ${
-                isHovered ? 'ring-2 ring-primary ring-offset-0' : ''
-              }`}
-              title={`Capture Group #${group.index}${group.name ? ` (${group.name})` : ''}: "${group.text}"`}
-            >
-              {group.text}
-            </mark>
-          );
-
-          groupLastIndex = group.end;
-        });
-
-        if (groupLastIndex < match.end) {
-          groupElements.push(
-            <span key={`g-tail-${groupLastIndex}`}>
-              {testText.slice(groupLastIndex, match.end)}
-            </span>
-          );
-        }
-
-        segments.push(
-          <mark
-            key={`match-${mIdx}`}
-            className="rounded-none bg-primary/20 text-transparent border-b-2 border-primary/60 font-mono"
-            title={`Full Match #${mIdx + 1}: "${match.text}" [${match.start}, ${match.end}]`}
-          >
-            {groupElements}
-          </mark>
-        );
-      } else {
-        // Simple match without sub-groups
-        segments.push(
-          <mark
-            key={`match-${mIdx}`}
-            className="rounded-none bg-primary/25 text-transparent border-b-2 border-primary font-mono transition-all"
-            title={`Match #${mIdx + 1}: "${match.text}" [${match.start}, ${match.end}]`}
-          >
-            {match.text}
-          </mark>
-        );
-      }
-
-      lastIndex = match.end;
+  const highlights = () => {
+    if (!a.isValid || !a.matches.length || !testText) return testText;
+    const out: React.ReactNode[] = []; let last = 0;
+    a.matches.forEach((m: RegexMatch, mi: number) => {
+      if (m.end <= m.start) return;
+      if (m.start > last) out.push(testText.slice(last, m.start));
+      const kids: React.ReactNode[] = []; let gl = m.start;
+      [...m.groups].filter((g) => g.end > g.start).sort((x, y) => x.start - y.start).forEach((g, gi) => {
+        if (g.start < gl) return;
+        if (g.start > gl) kids.push(testText.slice(gl, g.start));
+        kids.push(<mark key={`g${mi}-${gi}`} className={`rx-g g${g.index % 8} ${hoveredGroupIndex === g.index ? 'rx-hot' : ''}`}>{g.text}</mark>);
+        gl = g.end;
+      });
+      if (gl < m.end) kids.push(testText.slice(gl, m.end));
+      out.push(<mark key={`m${mi}`}>{kids}</mark>); last = m.end;
     });
-
-    // Trailing text after final match
-    if (lastIndex < testText.length) {
-      segments.push(
-        <span key={`text-end`}>{testText.slice(lastIndex)}</span>
-      );
-    }
-
-    return segments;
+    if (last < testText.length) out.push(testText.slice(last));
+    return out;
   };
 
-  const lineCount = testText.split('\n').length;
-  const charCount = testText.length;
+  const status = !a.isValid ? 'Pattern has an error' : a.count === 0 ? 'No matches' : `${a.count} ${a.count === 1 ? 'match' : 'matches'}`;
 
   return (
-    <div className="space-y-2 h-full flex flex-col">
-      {/* Header bar with statistics */}
-      <div className="flex items-center justify-between shrink-0">
-        <label className="text-xs font-semibold uppercase tracking-wider text-foreground-muted flex items-center gap-1.5">
-          <FileText className="w-3.5 h-3.5 text-primary" /> Test String
-        </label>
+    <section aria-label="Test text">
+      <div className="flex items-end justify-between gap-4 mb-2">
+        <h2 className="text-lg font-semibold"><label htmlFor="rx-test">Test text</label></h2>
+        <p className="text-[13px] text-foreground-muted font-mono">
+          <span className={a.isValid && a.count ? 'text-foreground' : ''}>{status}</span>
+          <span className="text-foreground-dim"> · {a.executionTimeMs} ms · {testText.length} chars</span>
+        </p>
+      </div>
 
-        {/* Live Metrics */}
-        <div className="flex items-center gap-3 text-xs text-foreground-dim">
-          <span className="flex items-center gap-1">
-            <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
-            <span className="font-semibold text-foreground">{analysis.count}</span> {analysis.count === 1 ? 'match' : 'matches'}
-          </span>
-          <span className="flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5 text-foreground-dim" />
-            <span className="font-mono text-foreground">{analysis.executionTimeMs} ms</span>
-          </span>
-          <span className="flex items-center gap-1">
-            <Hash className="w-3.5 h-3.5 text-foreground-dim" />
-            <span>{charCount} chars, {lineCount} lines</span>
-          </span>
+      <div className="grid grid-cols-[44px_minmax(0,1fr)] lg:grid-cols-[44px_minmax(0,1fr)_250px] rounded-lg border border-border bg-surface/60 overflow-hidden focus-within:border-foreground/30 transition-colors">
+        {/* gutter */}
+        <div className="relative border-r border-border text-right font-mono text-xs text-foreground-dim select-none" style={{ height: H }} aria-hidden>
+          {Array.from({ length: rows }, (_, i) => (<div key={i} className="absolute right-3" style={{ top: PAD + i * LH, lineHeight: `${LH}px` }}>{i < lineStarts.length ? i + 1 : ''}</div>))}
+        </div>
+
+        {/* text */}
+        <div className="relative ruled" style={{ height: H }}>
+          <div ref={bgRef} aria-hidden className="rx-text rx-layer absolute inset-0 overflow-hidden pointer-events-none select-none text-transparent">{highlights()}{'\n'}</div>
+          <textarea id="rx-test" ref={taRef} wrap="off" value={testText} onChange={(e) => setTestText(e.target.value)}
+            onScroll={() => { if (taRef.current && bgRef.current) bgRef.current.scrollLeft = taRef.current.scrollLeft; }}
+            placeholder="Paste text to test your pattern against" spellCheck={false} style={{ height: H }}
+            className="rx-text relative z-10 block w-full bg-transparent text-foreground placeholder:text-foreground-dim focus:outline-none resize-none overflow-x-auto overflow-y-hidden" />
+        </div>
+
+        {/* margin notes */}
+        <div className="relative hidden lg:block border-l border-border" style={{ height: H }} aria-label="Matches by line">
+          {notes.map(([ln, items]) => (
+            <div key={ln} className="absolute left-0 right-0 flex items-center gap-3 px-3 overflow-hidden whitespace-nowrap font-mono text-xs" style={{ top: PAD + ln * LH, height: LH }}>
+              {items.map(({ n, m }) => (
+                <span key={n} className="flex items-center gap-1.5 text-foreground-muted">
+                  <span className="text-foreground font-semibold">{n}</span>
+                  {m.groups.length === 0 && <span className="w-1.5 h-1.5 rounded-full bg-hl" />}
+                  {m.groups.map((g) => (<span key={g.index} className={`g${g.index % 8} flex items-center gap-1`}><i className="w-1.5 h-1.5 rounded-full not-italic" style={{ background: 'rgb(var(--g))' }} />{g.text}</span>))}
+                </span>
+              ))}
+            </div>
+          ))}
+          {!notes.length && <p className="absolute inset-x-3 text-xs text-foreground-dim" style={{ top: PAD, lineHeight: `${LH}px` }}>Matches are noted here, line by line.</p>}
         </div>
       </div>
 
-      {/* Editor & Highlight Container */}
-      <div className="relative flex-1 min-h-[220px] rounded-2xl bg-surface-subtle border border-border-subtle focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 shadow-inner overflow-hidden">
-        {/* Layer 1: Backdrop with colorful match highlights */}
-        <div
-          ref={backdropRef}
-          aria-hidden="true"
-          className="absolute inset-0 p-4 font-mono text-xs sm:text-sm leading-6 tracking-normal whitespace-pre-wrap break-all pointer-events-none select-none text-transparent overflow-auto scrollbar-none m-0 border-0"
-        >
-          {renderHighlights()}
+      {groupCount > 0 && (
+        <div className="flex flex-wrap items-center gap-1 mt-3 text-xs text-foreground-muted">
+          <span className="mr-1.5">Capture groups</span>
+          {Array.from({ length: groupCount }, (_, k) => k + 1).map((n) => (
+            <button key={n} onMouseEnter={() => setHoveredGroupIndex(n)} onMouseLeave={() => setHoveredGroupIndex(null)} onFocus={() => setHoveredGroupIndex(n)} onBlur={() => setHoveredGroupIndex(null)}
+              className={`g${n % 8} flex items-center gap-1.5 px-2 py-0.5 rounded-md font-mono hover:bg-surface-elevated`}>
+              <i className="w-2 h-2 rounded-full" style={{ background: 'rgb(var(--g))' }} />${n}
+            </button>
+          ))}
         </div>
-
-        {/* Layer 2: Editable textarea with caret */}
-        <textarea
-          ref={textareaRef}
-          value={testText}
-          onChange={(e) => setTestText(e.target.value)}
-          onScroll={handleScroll}
-          placeholder="Paste or type test text here..."
-          spellCheck={false}
-          className="relative z-10 w-full h-full p-4 bg-transparent font-mono text-xs sm:text-sm leading-6 tracking-normal text-foreground placeholder:text-foreground-dim focus:outline-none resize-none whitespace-pre-wrap break-all overflow-auto m-0 border-0"
-        />
-      </div>
-
-      {/* Group Palette Legend */}
-      <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-foreground-muted shrink-0">
-        <span className="text-[10px] uppercase font-semibold text-foreground-dim tracking-wider">Group Colors:</span>
-        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary">
-          <span className="w-2 h-2 rounded-full bg-primary" /> Full Match (0)
-        </span>
-        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400">
-          <span className="w-2 h-2 rounded-full bg-orange-400" /> Group 1
-        </span>
-        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-          <span className="w-2 h-2 rounded-full bg-emerald-400" /> Group 2
-        </span>
-        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/30 text-violet-400">
-          <span className="w-2 h-2 rounded-full bg-violet-400" /> Group 3
-        </span>
-        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-600/10 border border-amber-600/30 text-amber-300">
-          <span className="w-2 h-2 rounded-full bg-amber-400" /> Group 4
-        </span>
-      </div>
-    </div>
+      )}
+    </section>
   );
 };

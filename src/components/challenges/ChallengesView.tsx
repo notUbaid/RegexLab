@@ -130,23 +130,14 @@ export const ChallengesView: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <div className="max-w-[1120px] mx-auto px-6 sm:px-10 pt-4 pb-24 space-y-10">
       {/* Top Header Card */}
       <DoubleBezelCard innerClassName="p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider">
-              Practice Mode
-            </span>
-            <span className="text-xs text-foreground/60 flex items-center gap-1">
-              <Trophy className="w-3.5 h-3.5 text-primary" />
-              Practice Puzzles
-            </span>
-          </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
+          <h1 className="text-[34px] leading-none font-semibold tracking-[-0.03em] text-foreground">
             Practice What You Learned
           </h1>
-          <p className="text-xs text-foreground/70 mt-0.5">
+          <p className="text-[15px] text-foreground-muted mt-3 max-w-xl leading-snug">
             11 interactive puzzles to practice writing regex step by step, from beginner to advanced.
           </p>
         </div>
@@ -158,7 +149,7 @@ export const ChallengesView: React.FC = () => {
             <div className="font-bold text-foreground">
               {completedChallenges.length} / {REGEX_CHALLENGES.length} Solved
             </div>
-            <div className="text-[10px] text-foreground/60">
+            <div className="text-[11px] text-foreground/60">
               {Math.round((completedChallenges.length / REGEX_CHALLENGES.length) * 100)}% Finished
             </div>
           </div>
@@ -204,15 +195,15 @@ export const ChallengesView: React.FC = () => {
                   className="space-y-1.5"
                 >
                   <div className="flex items-center justify-between">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${levelStyle}`}>
+                    <span className={`px-2 py-0.5 rounded text-[11px] font-bold border ${levelStyle}`}>
                       {challenge.level}
                     </span>
                     {isCompleted ? (
-                      <span className="text-[11px] font-semibold text-emerald-400 flex items-center gap-1">
+                      <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1">
                         <CheckCircle2 className="w-3.5 h-3.5" /> Solved
                       </span>
                     ) : (
-                      <span className="text-[10px] font-mono text-foreground/40">
+                      <span className="text-[11px] font-mono text-foreground/40">
                         #{idx + 1}
                       </span>
                     )}
@@ -220,7 +211,7 @@ export const ChallengesView: React.FC = () => {
                   <h4 className="text-xs font-bold text-foreground">
                     {challenge.title}
                   </h4>
-                  <p className="text-[11px] text-foreground/60 line-clamp-1">
+                  <p className="text-xs text-foreground/60 line-clamp-1">
                     {challenge.instructions}
                   </p>
                 </div>
@@ -234,7 +225,7 @@ export const ChallengesView: React.FC = () => {
           {/* Active Challenge Header */}
           <DoubleBezelCard innerClassName="p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <span className={`px-2.5 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider border ${getLevelBadge(activeChallenge.level)}`}>
+              <span className={`px-2.5 py-0.5 rounded-md text-xs font-bold border ${getLevelBadge(activeChallenge.level)}`}>
                 {activeChallenge.level} Tier
               </span>
               <button
@@ -248,7 +239,7 @@ export const ChallengesView: React.FC = () => {
             </div>
 
             <div>
-              <h2 className="text-xl font-extrabold text-foreground">
+              <h2 className="text-xl font-semibold text-foreground">
                 {activeChallenge.title}
               </h2>
               <p className="text-xs text-foreground/70 mt-1 leading-relaxed">
@@ -277,7 +268,7 @@ export const ChallengesView: React.FC = () => {
           {/* Interactive Regex Solver Input */}
           <DoubleBezelCard innerClassName="p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+              <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
                 <Code2 className="w-4 h-4 text-primary" />
                 Your Solution Pattern
               </span>
@@ -312,7 +303,7 @@ export const ChallengesView: React.FC = () => {
           {/* Test Suite Progress Card */}
           <DoubleBezelCard innerClassName="p-5 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
+              <h3 className="text-xs font-bold text-foreground">
                 Live Test Suite Results
               </h3>
               <span className="text-xs font-mono font-bold text-foreground">
@@ -339,7 +330,7 @@ export const ChallengesView: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-emerald-400">Puzzle Solved!</h4>
-                    <p className="text-[11px] text-foreground/70">
+                    <p className="text-xs text-foreground/70">
                       Great job! All your test cases matched and passed correctly.
                     </p>
                   </div>
@@ -359,7 +350,7 @@ export const ChallengesView: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
               {/* Must Match */}
               <div className="space-y-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1">
+                <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   Must Match ({testResults.mustMatchResults.length})
                 </span>
@@ -386,7 +377,7 @@ export const ChallengesView: React.FC = () => {
 
               {/* Must NOT Match */}
               <div className="space-y-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1">
+                <span className="text-xs font-bold text-amber-400 flex items-center gap-1">
                   <XCircle className="w-3.5 h-3.5" />
                   Must NOT Match ({testResults.mustNotMatchResults.length})
                 </span>

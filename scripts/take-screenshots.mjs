@@ -33,22 +33,22 @@ async function capture() {
   // Helper to click navigation tab and capture view
   const views = [
     { name: 'playground', label: 'Playground', file: '02-playground.png' },
-    { name: 'visualizer', label: 'Step-by-Step', file: '03-visualizer.png' },
-    { name: 'builder', label: 'No-Code Builder', file: '04-builder.png' },
-    { name: 'ast', label: 'Regex Tree', file: '05-ast.png' },
-    { name: 'debugger', label: 'Fix Errors', file: '06-debugger.png' },
-    { name: 'performance', label: 'Speed Check', file: '07-performance.png' },
+    { name: 'visualizer', label: 'Step by step', file: '03-visualizer.png' },
+    { name: 'ast', label: 'Pattern tree', file: '05-ast.png' },
     { name: 'compatibility', label: 'Languages', file: '08-compatibility.png' },
-    { name: 'library', label: 'Examples', file: '09-library.png' },
+    { name: 'builder', label: 'Builder', file: '04-builder.png' },
+    { name: 'debugger', label: 'Fix errors', file: '06-debugger.png' },
+    { name: 'performance', label: 'Speed check', file: '07-performance.png' },
     { name: 'compare', label: 'Compare', file: '10-compare.png' },
+    { name: 'library', label: 'Examples', file: '09-library.png' },
     { name: 'challenges', label: 'Practice', file: '11-challenges.png' },
   ];
 
   for (const v of views) {
     console.log(`Navigating to ${v.label}...`);
-    // Find the header button matching label text and click it
+    // Find the sidebar button matching label text and click it
     const clicked = await page.evaluate((label) => {
-      const buttons = Array.from(document.querySelectorAll('header button'));
+      const buttons = Array.from(document.querySelectorAll('aside button, nav button'));
       const btn = buttons.find(b => b.textContent && b.textContent.includes(label));
       if (btn) {
         btn.click();
@@ -58,11 +58,11 @@ async function capture() {
     }, v.label);
 
     if (clicked) {
-      await delay(1000); // Allow spring transitions and canvas animations to settle
+      await delay(1200); // Allow spring transitions and canvas animations to settle
       await page.screenshot({ path: path.join(OUTPUT_DIR, v.file) });
       console.log(`Saved screenshots/${v.file}`);
     } else {
-      console.warn(`Could not find header button for ${v.label}`);
+      console.warn(`Could not find button for ${v.label}`);
     }
   }
 

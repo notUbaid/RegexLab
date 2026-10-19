@@ -73,23 +73,14 @@ export const PerformanceView: React.FC = () => {
   const riskTheme = getRiskColor(analysis.riskLevel);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <div className="max-w-[1120px] mx-auto px-6 sm:px-10 pt-4 pb-24 space-y-10">
       {/* Top Header Card */}
       <DoubleBezelCard innerClassName="p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20">
-              Safety Check
-            </span>
-            <span className="text-xs text-foreground-muted flex items-center gap-1">
-              <Activity className="w-3.5 h-3.5 text-primary" />
-              Speed & Loop Checker
-            </span>
-          </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
+          <h1 className="text-[34px] leading-none font-semibold tracking-[-0.03em] text-foreground">
             Speed & Loop Safety Check
           </h1>
-          <p className="text-xs text-foreground-muted mt-0.5">
+          <p className="text-[15px] text-foreground-muted mt-3 max-w-xl leading-snug">
             Check if your regex could get stuck in slow loops or freeze a browser when checking long text.
           </p>
         </div>
@@ -109,7 +100,7 @@ export const PerformanceView: React.FC = () => {
         {/* Risk Score Meter */}
         <DoubleBezelCard innerClassName={`p-6 space-y-3 ${riskTheme.bg} ${riskTheme.border}`}>
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-foreground-muted flex items-center gap-1.5">
+            <span className="text-xs font-bold text-foreground-muted flex items-center gap-1.5">
               <Flame className="w-4 h-4 text-primary" />
               Slow Loop Risk
             </span>
@@ -119,7 +110,7 @@ export const PerformanceView: React.FC = () => {
           </div>
 
           <div className="flex items-baseline gap-2">
-            <span className={`text-4xl font-extrabold font-mono ${riskTheme.text}`}>
+            <span className={`text-4xl font-semibold font-mono ${riskTheme.text}`}>
               {analysis.riskScore}
             </span>
             <span className="text-xs text-foreground-dim font-mono">/ 100 Risk Score</span>
@@ -140,13 +131,13 @@ export const PerformanceView: React.FC = () => {
         {/* Complexity Class */}
         <DoubleBezelCard innerClassName="p-6 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-foreground/70 flex items-center gap-1.5">
+            <span className="text-xs font-bold text-foreground/70 flex items-center gap-1.5">
               <Cpu className="w-4 h-4 text-primary" />
               Pattern Speed & Efficiency
             </span>
           </div>
 
-          <div className="text-2xl font-extrabold font-mono text-foreground">
+          <div className="text-2xl font-semibold font-mono text-foreground">
             {analysis.complexityCategory}
           </div>
 
@@ -162,7 +153,7 @@ export const PerformanceView: React.FC = () => {
         {/* Adversarial Benchmark Runner */}
         <DoubleBezelCard innerClassName="p-6 space-y-3 flex flex-col justify-between">
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-foreground/70 flex items-center gap-1.5 mb-2">
+            <span className="text-xs font-bold text-foreground/70 flex items-center gap-1.5 mb-2">
               <Clock className="w-4 h-4 text-primary" />
               Quick Speed Test
             </span>
@@ -230,7 +221,7 @@ export const PerformanceView: React.FC = () => {
                 key={idx}
                 className="p-3.5 rounded-xl bg-card border border-red-500/20 text-xs text-foreground leading-relaxed flex items-start gap-3"
               >
-                <div className="w-5 h-5 rounded-full bg-red-500/10 text-red-400 font-mono text-[10px] flex items-center justify-center font-bold mt-0.5 shrink-0">
+                <div className="w-5 h-5 rounded-full bg-red-500/10 text-red-400 font-mono text-[11px] flex items-center justify-center font-bold mt-0.5 shrink-0">
                   !
                 </div>
                 <div>{issue}</div>

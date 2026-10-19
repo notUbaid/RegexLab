@@ -88,7 +88,7 @@ export const CheatSheetModal: React.FC<CheatSheetModalProps> = ({ isOpen, onClos
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-3xl bg-surface border border-border-subtle rounded-2xl shadow-2xl overflow-hidden p-6 max-h-[85vh] flex flex-col">
+      <div className="relative w-full max-w-3xl bg-surface border border-border-subtle rounded-xl shadow-2xl overflow-hidden p-6 max-h-[85vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-border-subtle shrink-0">
           <div className="flex items-center gap-2.5">
@@ -124,7 +124,7 @@ export const CheatSheetModal: React.FC<CheatSheetModalProps> = ({ isOpen, onClos
         <div className="overflow-y-auto space-y-5 pr-1 flex-1">
           {filteredCategories.map((cat) => (
             <div key={cat.category} className="space-y-2">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-primary">{cat.category}</h4>
+              <h4 className="text-xs font-semibold text-primary">{cat.category}</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {cat.items.map((item) => (
                   <div
@@ -139,8 +139,8 @@ export const CheatSheetModal: React.FC<CheatSheetModalProps> = ({ isOpen, onClos
                         </span>
                         <span className="text-xs font-medium text-foreground truncate">{item.name}</span>
                       </div>
-                      <p className="text-[11px] text-foreground-muted line-clamp-1">{item.desc}</p>
-                      <p className="text-[10px] text-foreground-dim font-mono">{item.example}</p>
+                      <p className="text-xs text-foreground-muted line-clamp-1">{item.desc}</p>
+                      <p className="text-[11px] text-foreground-dim font-mono">{item.example}</p>
                     </div>
                     <button
                       className="p-1.5 rounded-lg bg-surface hover:bg-primary hover:text-primary-foreground text-foreground-muted opacity-0 group-hover:opacity-100 transition-all shrink-0"

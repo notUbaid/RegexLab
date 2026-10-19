@@ -135,12 +135,12 @@ export const D3ComplexityChart: React.FC<D3ComplexityChartProps> = ({
   }, [riskScore, complexityCategory]);
 
   return (
-    <div className={`relative w-full rounded-2xl bg-surface border border-border p-4 shadow-xl ${className}`}>
+    <div className={`relative w-full rounded-xl bg-surface border border-border p-4 shadow-xl ${className}`}>
       <div className="flex items-center justify-between pb-2 border-b border-border mb-2">
-        <span className="text-xs font-bold uppercase tracking-wider text-foreground-muted">
+        <span className="text-xs font-bold text-foreground-muted">
           Speed & Step Growth Chart
         </span>
-        <div className="flex items-center gap-3 text-[10px] font-mono">
+        <div className="flex items-center gap-3 text-[11px] font-mono">
           <span className="flex items-center gap-1 text-emerald-400">
             <span className="w-2 h-0.5 bg-emerald-400" /> Fast (linear)
           </span>

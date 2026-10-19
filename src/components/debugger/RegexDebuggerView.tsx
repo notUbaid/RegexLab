@@ -37,23 +37,14 @@ export const RegexDebuggerView: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <div className="max-w-[1120px] mx-auto px-6 sm:px-10 pt-4 pb-24 space-y-10">
       {/* Top Header Card */}
       <DoubleBezelCard innerClassName="p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20">
-              Helper Tool
-            </span>
-            <span className="text-xs text-foreground-muted flex items-center gap-1">
-              <Bug className="w-3.5 h-3.5 text-primary" />
-              Match Helper
-            </span>
-          </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
+          <h1 className="text-[34px] leading-none font-semibold tracking-[-0.03em] text-foreground">
             Fix My Regex: Find Where It Stopped
           </h1>
-          <p className="text-xs text-foreground-muted mt-0.5">
+          <p className="text-[15px] text-foreground-muted mt-3 max-w-xl leading-snug">
             Find out exactly which letter caused your regex to stop matching, see what character it was looking for, and get 1-click tips to fix it.
           </p>
         </div>
@@ -71,7 +62,7 @@ export const RegexDebuggerView: React.FC = () => {
       {/* Main Diagnostic Status Hero */}
       {diagnosis.matched ? (
         <DoubleBezelCard innerClassName="p-8 bg-emerald-500/5 border-emerald-500/20 text-center space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/10">
+          <div className="w-16 h-16 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/10">
             <CheckCircle2 className="w-8 h-8" />
           </div>
           <div className="space-y-1">
@@ -89,7 +80,7 @@ export const RegexDebuggerView: React.FC = () => {
             </div>
             <div className="space-y-1 flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-red-400">
+                <span className="text-xs font-bold text-red-400">
                   Mismatch Detected
                 </span>
                 {diagnosis.failureIndex >= 0 && (
@@ -110,7 +101,7 @@ export const RegexDebuggerView: React.FC = () => {
       {!diagnosis.matched && diagnosis.failureIndex >= 0 && (
         <DoubleBezelCard innerClassName="p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-foreground/70 flex items-center gap-1.5">
+            <span className="text-xs font-bold text-foreground/70 flex items-center gap-1.5">
               <Search className="w-3.5 h-3.5 text-primary" />
               Mismatch Location in Text
             </span>
@@ -128,7 +119,7 @@ export const RegexDebuggerView: React.FC = () => {
                   key={idx}
                   className={`inline-block px-1 py-0.5 rounded transition-all ${
                     isFailure
-                      ? 'bg-red-500 text-white font-extrabold ring-4 ring-red-500/30 scale-110 shadow-lg'
+                      ? 'bg-red-500 text-white font-semibold ring-4 ring-red-500/30 scale-110 shadow-lg'
                       : isBefore
                       ? 'bg-emerald-500/15 text-emerald-400'
                       : 'text-foreground/60'
@@ -157,7 +148,7 @@ export const RegexDebuggerView: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Expected */}
           <DoubleBezelCard innerClassName="p-5 space-y-3 bg-primary/5 border-primary/20">
-            <div className="flex items-center gap-2 text-primary text-xs font-bold uppercase tracking-wider">
+            <div className="flex items-center gap-2 text-primary text-xs font-bold">
               <Code2 className="w-4 h-4" />
               What Pattern Expected
             </div>
@@ -173,7 +164,7 @@ export const RegexDebuggerView: React.FC = () => {
 
           {/* Actual Found */}
           <DoubleBezelCard innerClassName="p-5 space-y-3 bg-amber-500/5 border-amber-500/20">
-            <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider">
+            <div className="flex items-center gap-2 text-amber-400 text-xs font-bold">
               <AlertOctagon className="w-4 h-4" />
               What Was Found in Input
             </div>
@@ -232,7 +223,7 @@ export const RegexDebuggerView: React.FC = () => {
       {/* Live Sample Text Editor */}
       <DoubleBezelCard innerClassName="p-5 space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+          <h3 className="text-xs font-bold text-foreground flex items-center gap-2">
             <Search className="w-4 h-4 text-primary" />
             Live Test Text Subject
           </h3>

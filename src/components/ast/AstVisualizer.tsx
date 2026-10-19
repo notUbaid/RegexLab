@@ -87,18 +87,18 @@ const TreeNodeItem: React.FC<TreeNodeProps> = ({
               : 'bg-card hover:bg-muted/60 border-border/70 hover:border-border'
           }`}
         >
-          <span className={`px-2 py-0.5 rounded-md font-mono text-[10px] font-bold border ${colors.bg} ${colors.text} ${colors.border}`}>
+          <span className={`px-2 py-0.5 rounded-md font-mono text-[11px] font-bold border ${colors.bg} ${colors.text} ${colors.border}`}>
             {node.type}
           </span>
           <span className="font-semibold text-foreground">
             {node.label}
           </span>
           {node.raw && (
-            <code className="px-1.5 py-0.5 rounded bg-muted/80 font-mono text-[11px] text-foreground/70">
+            <code className="px-1.5 py-0.5 rounded bg-muted/80 font-mono text-xs text-foreground/70">
               {node.raw}
             </code>
           )}
-          <span className="text-[10px] font-mono text-foreground/40 ml-1">
+          <span className="text-[11px] font-mono text-foreground/40 ml-1">
             [{node.start}:{node.end}]
           </span>
         </button>
@@ -165,23 +165,14 @@ export const AstVisualizer: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <div className="max-w-[1120px] mx-auto px-6 sm:px-10 pt-4 pb-24 space-y-10">
       {/* Top Header Card */}
       <DoubleBezelCard innerClassName="p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20">
-              Visual Structure
-            </span>
-            <span className="text-xs text-foreground-muted flex items-center gap-1">
-              <FolderTree className="w-3.5 h-3.5 text-primary" />
-              Pattern Tree
-            </span>
-          </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
+          <h1 className="text-[34px] leading-none font-semibold tracking-[-0.03em] text-foreground">
             Regex Tree: Parts of Your Pattern
           </h1>
-          <p className="text-xs text-foreground-muted mt-0.5">
+          <p className="text-[15px] text-foreground-muted mt-3 max-w-xl leading-snug">
             Break down your regex pattern into simple pieces like letters, numbers, repeating quantifiers, and groups.
           </p>
         </div>
@@ -259,7 +250,7 @@ export const AstVisualizer: React.FC = () => {
         <div className="lg:col-span-4 space-y-6">
           <DoubleBezelCard innerClassName="p-5 space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-border">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+              <h3 className="text-xs font-bold text-foreground flex items-center gap-2">
                 <Info className="w-4 h-4 text-primary" />
                 AST Node Inspector
               </h3>
@@ -269,7 +260,7 @@ export const AstVisualizer: React.FC = () => {
               <div className="space-y-4">
                 <div className="p-3 rounded-xl bg-muted/40 border border-border space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-foreground/60 font-semibold uppercase">Node Type</span>
+                    <span className="text-xs text-foreground/60 font-semibold uppercase">Node Type</span>
                     <span className={`px-2 py-0.5 rounded font-mono text-xs font-bold border ${TYPE_COLORS[activeSelectedNode.type]?.bg} ${TYPE_COLORS[activeSelectedNode.type]?.text} ${TYPE_COLORS[activeSelectedNode.type]?.border}`}>
                       {activeSelectedNode.type}
                     </span>
@@ -301,7 +292,7 @@ export const AstVisualizer: React.FC = () => {
                   {activeSelectedNode.meta && Object.keys(activeSelectedNode.meta).length > 0 && (
                     <div className="pt-2">
                       <span className="text-foreground/60 block mb-1.5 font-semibold">Metadata:</span>
-                      <pre className="p-2.5 rounded-lg bg-background border border-border font-mono text-[11px] text-foreground/80 overflow-x-auto">
+                      <pre className="p-2.5 rounded-lg bg-background border border-border font-mono text-xs text-foreground/80 overflow-x-auto">
                         {JSON.stringify(activeSelectedNode.meta, null, 2)}
                       </pre>
                     </div>
@@ -318,7 +309,7 @@ export const AstVisualizer: React.FC = () => {
 
           {/* Node Category Legend */}
           <DoubleBezelCard innerClassName="p-5 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground pb-2 border-b border-border">
+            <h4 className="text-xs font-bold text-foreground pb-2 border-b border-border">
               Grammar Category Legend
             </h4>
             <div className="grid grid-cols-2 gap-2 text-xs">

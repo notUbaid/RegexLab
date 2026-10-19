@@ -294,7 +294,7 @@ export const D3StateMachineGraph: React.FC<D3StateMachineGraphProps> = ({
   };
 
   return (
-    <div className={`relative w-full rounded-2xl bg-card border border-border p-2 overflow-hidden shadow-sm ${className}`}>
+    <div className={`relative w-full rounded-xl bg-card border border-border p-2 overflow-hidden shadow-sm ${className}`}>
       {/* Top Overlay Controls */}
       <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-surface/90 backdrop-blur-md p-1 rounded-xl border border-border shadow-md">
         <button
@@ -304,7 +304,7 @@ export const D3StateMachineGraph: React.FC<D3StateMachineGraphProps> = ({
         >
           <ZoomOut className="w-3.5 h-3.5" />
         </button>
-        <span className="text-[10px] font-mono font-bold text-foreground px-1">
+        <span className="text-[11px] font-mono font-bold text-foreground px-1">
           {Math.round(zoomScale * 100)}%
         </span>
         <button
@@ -325,7 +325,7 @@ export const D3StateMachineGraph: React.FC<D3StateMachineGraphProps> = ({
 
       <div className="absolute top-3 left-4 z-10 flex items-center gap-2">
         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-        <span className="text-[11px] font-mono font-bold tracking-wider text-foreground-muted uppercase">
+        <span className="text-xs font-mono font-bold tracking-wider text-foreground-muted uppercase">
           Step Path: How Regex Checks Each Part
         </span>
       </div>

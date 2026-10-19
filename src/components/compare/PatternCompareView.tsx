@@ -85,23 +85,14 @@ export const PatternCompareView: React.FC = () => {
   }, [perfA, perfB, pattern, comparePattern, compatCountA, compatCountB]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <div className="max-w-[1120px] mx-auto px-6 sm:px-10 pt-4 pb-24 space-y-10">
       {/* Top Header Card */}
       <DoubleBezelCard innerClassName="p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider">
-              Diff & Benchmarking
-            </span>
-            <span className="text-xs text-foreground/60 flex items-center gap-1">
-              <GitCompare className="w-3.5 h-3.5 text-primary" />
-              Smart Pattern Comparison
-            </span>
-          </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
+          <h1 className="text-[34px] leading-none font-semibold tracking-[-0.03em] text-foreground">
             Side-by-Side Pattern Comparison
           </h1>
-          <p className="text-xs text-foreground/70 mt-0.5">
+          <p className="text-[15px] text-foreground-muted mt-3 max-w-xl leading-snug">
             Compare two regular expressions on readability, execution complexity, ReDoS safety, and cross-engine portability.
           </p>
         </div>
@@ -172,7 +163,7 @@ export const PatternCompareView: React.FC = () => {
 
       {/* Comparative Metrics Matrix Table */}
       <DoubleBezelCard innerClassName="p-6 space-y-4">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2 pb-2 border-b border-border">
+        <h3 className="text-xs font-bold text-foreground flex items-center gap-2 pb-2 border-b border-border">
           <Cpu className="w-4 h-4 text-primary" />
           Which Pattern Works Better? (Comparison)
         </h3>
@@ -255,7 +246,7 @@ export const PatternCompareView: React.FC = () => {
       {/* Shared Test Text Box */}
       <DoubleBezelCard innerClassName="p-5 space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+          <h3 className="text-xs font-bold text-foreground flex items-center gap-2">
             <Layers className="w-4 h-4 text-primary" />
             Shared Test Input
           </h3>
