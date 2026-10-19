@@ -238,6 +238,26 @@ RegexLab is thoroughly verified:
 
 ---
 
+## Deployment to Vercel
+
+RegexLab is fully configured for zero-configuration deployment to Vercel with dedicated SPA rewrites and asset caching rules (`vercel.json`):
+
+### Option A: Via GitHub (Recommended)
+1. Go to [vercel.com/new](https://vercel.com/new).
+2. Select and import the `notUbaid/RegexLab` repository.
+3. Vercel automatically detects Vite as the framework.
+4. Click **Deploy**.
+
+### Option B: Via Vercel CLI
+```bash
+npm i -g vercel
+vercel
+```
+
+Production builds will automatically build using `npm run build` and output static assets to `dist/`.
+
+---
+
 ## Contributing
 
 Contributions are welcome. Here is how to get started:
