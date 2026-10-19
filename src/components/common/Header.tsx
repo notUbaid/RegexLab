@@ -20,6 +20,7 @@ import {
   Sparkles,
   ChevronDown
 } from 'lucide-react';
+import { soundFX } from '../../utils/soundEffects';
 
 interface HeaderProps {
   onOpenShare: () => void;
@@ -108,6 +109,24 @@ export const Header: React.FC<HeaderProps> = ({ onOpenShare, onOpenCheatSheet })
 
         {/* Right Tools & Theme Switcher */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Sound FX Toggle */}
+          <button
+            onClick={() => {
+              const next = !soundEnabled;
+              setSoundEnabled(next);
+              soundFX.setEnabled(next);
+              if (next) soundFX.playSuccess();
+            }}
+            className={`p-2 rounded-lg border transition-all flex items-center justify-center text-xs ${
+              soundEnabled
+                ? 'bg-primary/10 border-primary/30 text-primary'
+                : 'text-foreground-muted hover:text-foreground hover:bg-surface-elevated border-transparent'
+            }`}
+            title={soundEnabled ? 'Disable Audio Feedback' : 'Enable Audio Feedback'}
+          >
+            {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+          </button>
+
           {/* Cheat Sheet trigger */}
           <button
             onClick={onOpenCheatSheet}

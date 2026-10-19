@@ -18,6 +18,7 @@ import {
 import { useRegexStore } from '../../store/useRegexStore';
 import { translateRegex, ExplanationBlock } from '../../parser/translator';
 import { DoubleBezelCard } from '../common/DoubleBezelCard';
+import { Regex3DUniverse } from '../common/Regex3DUniverse';
 
 export const LandingHero: React.FC = () => {
   const { setActiveView, loadPattern } = useRegexStore();
@@ -44,10 +45,15 @@ export const LandingHero: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12 space-y-20">
+    <div className="relative max-w-7xl mx-auto px-4 py-12 space-y-20 overflow-hidden">
+      {/* 3D WebGL Holographic Particle Universe Background */}
+      <div className="absolute inset-x-0 top-0 h-[600px] overflow-hidden pointer-events-none opacity-40 z-0">
+        <Regex3DUniverse particleCount={850} interactive={true} />
+      </div>
+
       {/* Hero Section */}
-      <div className="text-center space-y-6 max-w-4xl mx-auto pt-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary">
+      <div className="relative z-10 text-center space-y-6 max-w-4xl mx-auto pt-6">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary backdrop-blur-md shadow-sm">
           <Sparkles className="w-3.5 h-3.5 animate-pulse" />
           <span>Next-Generation Visual Regex Platform</span>
         </div>

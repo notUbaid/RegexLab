@@ -15,6 +15,7 @@ import { PatternLibraryView } from './components/library/PatternLibraryView';
 import { PatternCompareView } from './components/compare/PatternCompareView';
 import { ChallengesView } from './components/challenges/ChallengesView';
 import { Sparkles, Terminal, Heart, Code2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const App: React.FC = () => {
   const { activeView, theme, loadFromShareUrl } = useRegexStore();
@@ -89,9 +90,19 @@ export const App: React.FC = () => {
         onOpenCheatSheet={() => setIsCheatSheetOpen(true)}
       />
 
-      {/* Main Content Area */}
-      <main className="flex-1">
-        {renderActiveView()}
+      {/* Main Content Area with Spring Transitions */}
+      <main className="flex-1 relative overflow-x-hidden">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeView}
+            initial={{ opacity: 0, y: 14, filter: 'blur(6px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, y: -10, filter: 'blur(6px)' }}
+            transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {renderActiveView()}
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       {/* Modern Minimal Footer */}

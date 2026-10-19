@@ -17,6 +17,9 @@ import {
 } from 'lucide-react';
 import { useRegexStore } from '../../store/useRegexStore';
 import { simulateRegexExecution } from '../../parser/stateMachine';
+import { tokenizeRegex } from '../../parser/tokenizer';
+import { soundFX } from '../../utils/soundEffects';
+import { D3StateMachineGraph } from './D3StateMachineGraph';
 import { DoubleBezelCard } from '../common/DoubleBezelCard';
 
 export const EngineVisualizer: React.FC = () => {
@@ -36,12 +39,28 @@ export const EngineVisualizer: React.FC = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const logContainerRef = useRef<HTMLDivElement | null>(null);
 
+  // Tokenize regex pattern for D3 finite state machine
+  const tokens = useMemo(() => {
+    return tokenizeRegex(pattern);
+  }, [pattern]);
+
   // Generate simulation trace steps
   const steps = useMemo(() => {
     return simulateRegexExecution(pattern, testText, flags);
   }, [pattern, testText, flags]);
 
   const currentStep = steps[currentStepIndex] || steps[0];
+
+  // Play micro-haptic sound on step update
+  useEffect(() => {
+    if (currentStep?.isBacktracking) {
+      soundFX.playWarning();
+    } else if (currentStep?.action === 'success') {
+      soundFX.playSuccess();
+    } else if (currentStep) {
+      soundFX.playStepTick();
+    }
+  }, [currentStepIndex]);
 
   // Auto-play interval handling
   useEffect(() => {
@@ -273,6 +292,13 @@ export const EngineVisualizer: React.FC = () => {
               />
             </div>
           </DoubleBezelCard>
+
+          {/* D3 Finite Automaton State Graph */}
+          <D3StateMachineGraph
+            tokens={tokens}
+            currentStep={currentStep}
+            className="shadow-xl"
+          />
 
           {/* Pattern Token Ribbon */}
           <DoubleBezelCard innerClassName="p-5 space-y-3">

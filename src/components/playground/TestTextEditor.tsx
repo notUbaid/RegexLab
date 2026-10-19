@@ -57,10 +57,8 @@ export const TestTextEditor: React.FC = () => {
           groupElements.push(
             <mark
               key={`grp-${mIdx}-${gIdx}`}
-              onMouseEnter={() => setHoveredGroupIndex(group.index)}
-              onMouseLeave={() => setHoveredGroupIndex(null)}
-              className={`rounded px-0.5 font-mono transition-all cursor-pointer ${groupColorClass} ${
-                isHovered ? 'ring-2 ring-primary ring-offset-1 font-bold' : ''
+              className={`rounded-none font-mono transition-all text-transparent ${groupColorClass} ${
+                isHovered ? 'ring-2 ring-primary ring-offset-0' : ''
               }`}
               title={`Capture Group #${group.index}${group.name ? ` (${group.name})` : ''}: "${group.text}"`}
             >
@@ -82,7 +80,7 @@ export const TestTextEditor: React.FC = () => {
         segments.push(
           <mark
             key={`match-${mIdx}`}
-            className="rounded px-0.5 bg-primary/20 text-foreground border-b-2 border-primary/60 font-mono"
+            className="rounded-none bg-primary/20 text-transparent border-b-2 border-primary/60 font-mono"
             title={`Full Match #${mIdx + 1}: "${match.text}" [${match.start}, ${match.end}]`}
           >
             {groupElements}
@@ -93,7 +91,7 @@ export const TestTextEditor: React.FC = () => {
         segments.push(
           <mark
             key={`match-${mIdx}`}
-            className="rounded px-0.5 bg-primary/25 text-foreground border-b-2 border-primary font-mono transition-all"
+            className="rounded-none bg-primary/25 text-transparent border-b-2 border-primary font-mono transition-all"
             title={`Match #${mIdx + 1}: "${match.text}" [${match.start}, ${match.end}]`}
           >
             {match.text}
@@ -148,7 +146,7 @@ export const TestTextEditor: React.FC = () => {
         <div
           ref={backdropRef}
           aria-hidden="true"
-          className="absolute inset-0 p-4 font-mono text-xs sm:text-sm leading-relaxed whitespace-pre-wrap break-all pointer-events-none select-none text-transparent overflow-auto scrollbar-none"
+          className="absolute inset-0 p-4 font-mono text-xs sm:text-sm leading-6 tracking-normal whitespace-pre-wrap break-all pointer-events-none select-none text-transparent overflow-auto scrollbar-none m-0 border-0"
         >
           {renderHighlights()}
         </div>
@@ -161,7 +159,7 @@ export const TestTextEditor: React.FC = () => {
           onScroll={handleScroll}
           placeholder="Paste or type test text here..."
           spellCheck={false}
-          className="relative z-10 w-full h-full p-4 bg-transparent font-mono text-xs sm:text-sm leading-relaxed text-foreground placeholder:text-foreground-dim focus:outline-none resize-none whitespace-pre-wrap break-all overflow-auto"
+          className="relative z-10 w-full h-full p-4 bg-transparent font-mono text-xs sm:text-sm leading-6 tracking-normal text-foreground placeholder:text-foreground-dim focus:outline-none resize-none whitespace-pre-wrap break-all overflow-auto m-0 border-0"
         />
       </div>
 

@@ -72,8 +72,8 @@ interface RegexStoreState {
   loadFromShareUrl: () => boolean;
 }
 
-const DEFAULT_PATTERN = '^([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+)\\.([a-zA-Z]{2,})$';
-const DEFAULT_FLAGS = 'gm';
+const DEFAULT_PATTERN = '([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+)\\.([a-zA-Z]{2,})';
+const DEFAULT_FLAGS = 'g';
 const DEFAULT_TEST_TEXT = `Welcome to RegexLab!
 Test your regex patterns in real time:
 

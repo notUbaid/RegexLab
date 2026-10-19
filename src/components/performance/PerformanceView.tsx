@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useRegexStore } from '../../store/useRegexStore';
 import { analyzeRegexPerformance } from '../../parser/redosAnalyzer';
+import { D3ComplexityChart } from './D3ComplexityChart';
 import { DoubleBezelCard } from '../common/DoubleBezelCard';
 
 export const PerformanceView: React.FC = () => {
@@ -195,6 +196,12 @@ export const PerformanceView: React.FC = () => {
           </div>
         </DoubleBezelCard>
       </div>
+
+      {/* D3 Theoretical Execution Curve */}
+      <D3ComplexityChart
+        riskScore={analysis.riskScore}
+        complexityCategory={analysis.complexityCategory}
+      />
 
       {/* Issues & Anti-Patterns Detected */}
       <DoubleBezelCard innerClassName="p-6 space-y-4">
