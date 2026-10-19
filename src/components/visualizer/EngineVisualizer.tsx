@@ -363,7 +363,7 @@ export const EngineVisualizer: React.FC = () => {
                           : 'text-foreground/75'
                       }`}
                     >
-                      {char === '\n' ? '↵\n' : char === ' ' ? '·' : char}
+                      {char === '\n' ? '\\n' : char}
                     </span>
                   );
                 })

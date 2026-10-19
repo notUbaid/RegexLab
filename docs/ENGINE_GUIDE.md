@@ -102,22 +102,22 @@ A server evaluating this pattern will run at 100% CPU utilization for several mi
 ### Rule 1: Use Mutually Exclusive Sets
 Instead of:
 ```regex
-# ❌ VULNERABLE: .* can cross quotation marks
+# VULNERABLE: .* can cross quotation marks
 "([^"]*)*"
 ```
 Use:
 ```regex
-# ✅ SAFE: Negated character class cannot cross quote boundary
+# SAFE: Negated character class cannot cross quote boundary
 "[^"\r\n]*"
 ```
 
 ### Rule 2: Anchor Your Expressions
 Always anchor patterns intended to validate form inputs:
 ```regex
-# ❌ Unanchored: Scans every substring offset
+# Unanchored: Scans every substring offset
 [a-z0-9]+@[a-z]+\.[a-z]{2,}
 
-# ✅ Anchored: Only tests once starting at index 0
+# Anchored: Only tests once starting at index 0
 ^[a-z0-9]+@[a-z]+\.[a-z]{2,}$
 ```
 

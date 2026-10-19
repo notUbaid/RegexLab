@@ -113,7 +113,7 @@ export const App: React.FC = () => {
               <span className="w-2 h-2 rounded-full bg-primary" />
               RegexLab
             </span>
-            <span className="text-foreground/40">•</span>
+            <span className="text-foreground/40">|</span>
             <span>The Visual Regular Expression Laboratory</span>
           </div>
 
@@ -121,7 +121,7 @@ export const App: React.FC = () => {
             <span className="font-mono text-[11px] hidden md:inline">
               <kbd className="px-1.5 py-0.5 rounded bg-muted border border-border text-[10px]">Ctrl</kbd> + <kbd className="px-1.5 py-0.5 rounded bg-muted border border-border text-[10px]">K</kbd> Quick Reference
             </span>
-            <span>Zero-tracking • Runs 100% Client-Side</span>
+            <span>Zero-tracking | Runs 100% Client-Side</span>
           </div>
         </div>
       </footer>

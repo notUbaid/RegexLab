@@ -135,7 +135,7 @@ export const RegexDebuggerView: React.FC = () => {
                   }`}
                   title={`Index ${idx}: '${char}'`}
                 >
-                  {char === '\n' ? '↵\n' : char === ' ' ? '·' : char}
+                  {char === '\n' ? '\\n' : char}
                 </span>
               );
             })}

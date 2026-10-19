@@ -105,7 +105,7 @@ export const D3StateMachineGraph: React.FC<D3StateMachineGraphProps> = ({
     tokens.forEach((token, idx) => {
       nodes.push({
         id: `node-${token.id}`,
-        label: token.raw.length > 5 ? `${token.raw.slice(0, 4)}…` : token.raw,
+        label: token.raw.length > 5 ? `${token.raw.slice(0, 4)}...` : token.raw,
         type: 'token',
         token,
         x: 60 + (idx + 1) * spacing,

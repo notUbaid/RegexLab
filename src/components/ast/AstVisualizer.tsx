@@ -283,7 +283,7 @@ export const AstVisualizer: React.FC = () => {
                   <div className="flex items-center justify-between py-1.5 border-b border-border/60">
                     <span className="text-foreground/60">Raw Regex Slice:</span>
                     <code className="font-mono bg-muted px-2 py-0.5 rounded text-foreground font-bold">
-                      {activeSelectedNode.raw || '—'}
+                      {activeSelectedNode.raw || '-'}
                     </code>
                   </div>
                   <div className="flex items-center justify-between py-1.5 border-b border-border/60">

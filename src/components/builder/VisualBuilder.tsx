@@ -26,8 +26,8 @@ const BLOCK_PRESETS: { type: BuilderBlockItem['type']; label: string; icon: stri
   { type: 'end_of_line', label: 'End of String', icon: '$', description: 'Matches end of line or string ($)' },
   { type: 'letters', label: 'Letters (a-z, A-Z)', icon: 'Az', description: 'Alphabetical characters [a-zA-Z]' },
   { type: 'numbers', label: 'Numbers (0-9)', icon: '0-9', description: 'Digits 0 through 9 (\\d)' },
-  { type: 'whitespace', label: 'Whitespace', icon: '␣', description: 'Space, tab, or newline (\\s)' },
-  { type: 'any_character', label: 'Any Character', icon: '·', description: 'Any character except newline (.)' },
+  { type: 'whitespace', label: 'Whitespace', icon: '\\s', description: 'Space, tab, or newline (\\s)' },
+  { type: 'any_character', label: 'Any Character', icon: '.', description: 'Any character except newline (.)' },
   { type: 'custom_text', label: 'Exact Text', icon: '""', description: 'Literal sequence of characters', defaultValue: 'sample' },
   { type: 'custom_set', label: 'Character Set', icon: '[ ]', description: 'Any one of specific characters', defaultValue: '._+-' },
   { type: 'not_in_set', label: 'Exclude Set', icon: '[^]', description: 'Any character NOT in this set', defaultValue: '0-9' },
@@ -367,7 +367,7 @@ export const VisualBuilder: React.FC = () => {
                                 min={block.min || 1}
                                 value={block.max || ''}
                                 onChange={(e) => updateBuilderBlock(block.id, { max: parseInt(e.target.value, 10) || undefined })}
-                                placeholder="∞"
+                                placeholder="max"
                                 className="w-full px-2 py-1.5 rounded-lg bg-background border border-border text-xs font-mono text-foreground"
                               />
                             </div>

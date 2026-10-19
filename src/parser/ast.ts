@@ -11,11 +11,11 @@
  * In a regular expression like `(a|b)+`:
  * 
  *   Expression (Root)
- *      └── Quantifier (+)
- *             └── Group ()
- *                    ├── Literal (a)
- *                    ├── Alternation (|)
- *                    └── Literal (b)
+ *      |-- Quantifier (+)
+ *             |-- Group ()
+ *                    |-- Literal (a)
+ *                    |-- Alternation (|)
+ *                    \-- Literal (b)
  * 
  * WHY DO WE NEED AN AST?
  * A flat list of tokens doesn't easily tell us which elements are inside a group

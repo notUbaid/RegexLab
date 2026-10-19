@@ -19,11 +19,11 @@ This document outlines the engineering guidelines, TypeScript patterns, and arch
 ### 1.3 Strict Immutability
 - **NEVER mutate objects or arrays directly**:
   ```typescript
-  // ❌ BAD: Direct mutation
+  // AVOID: Direct mutation
   state.builderBlocks.push(newBlock);
   user.name = 'Alice';
 
-  // ✅ GOOD: Pure immutable copy
+  // RECOMMENDED: Pure immutable copy
   return {
     ...state,
     builderBlocks: [...state.builderBlocks, newBlock]
@@ -34,10 +34,10 @@ This document outlines the engineering guidelines, TypeScript patterns, and arch
 - Never use the `any` escape hatch.
 - Use explicit interfaces, union types, generics, or `unknown` with type guards:
   ```typescript
-  // ❌ BAD
+  // AVOID
   catch (err: any) { console.log(err.message); }
 
-  // ✅ GOOD
+  // RECOMMENDED
   catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     console.log(message);
@@ -47,7 +47,7 @@ This document outlines the engineering guidelines, TypeScript patterns, and arch
 ### 1.5 Early Returns (Avoid Deep Nesting)
 - Use guard clauses and return early to keep function bodies flat and readable:
   ```typescript
-  // ❌ BAD: Deep nesting
+  // AVOID: Deep nesting
   function process(item) {
     if (item) {
       if (item.isValid) {
@@ -58,7 +58,7 @@ This document outlines the engineering guidelines, TypeScript patterns, and arch
     }
   }
 
-  // ✅ GOOD: Flat guard clauses
+  // RECOMMENDED: Flat guard clauses
   function process(item) {
     if (!item) return;
     if (!item.isValid) return;
@@ -70,11 +70,11 @@ This document outlines the engineering guidelines, TypeScript patterns, and arch
 ### 1.6 No Magic Numbers
 - Always declare named constants with clear descriptive names:
   ```typescript
-  // ❌ BAD
+  // AVOID
   if (steps.length > 500) return;
   setTimeout(tick, 40);
 
-  // ✅ GOOD
+  // RECOMMENDED
   const MAX_RECORDED_SIMULATION_STEPS = 500;
   const AUDIO_CLICK_DURATION_SECONDS = 0.04;
   ```
