@@ -53,27 +53,26 @@ export const LandingHero: React.FC = () => {
 
       {/* Hero Section */}
       <div className="relative z-10 text-center space-y-6 max-w-4xl mx-auto pt-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary backdrop-blur-md shadow-sm">
-          <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-          <span>Next-Generation Visual Regex Platform</span>
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary backdrop-blur-md">
+          <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+          <span>The Visual Regular Expression Laboratory</span>
         </div>
 
         <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-foreground leading-[1.1]">
-          Understand Regex{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-indigo-400 to-purple-400">
-            Visually.
-          </span>
+          See regex work, <span className="text-primary">letter by letter.</span>
         </h1>
 
-        <p className="text-base sm:text-lg text-foreground/70 max-w-2xl mx-auto leading-relaxed">
-          RegexLab transforms cryptic regular expressions into interactive, intuitive, and beautiful stepping machines. Watch engines think, translate syntax to plain English, and build patterns without fear.
+        <p className="text-base sm:text-lg text-foreground-muted max-w-2xl mx-auto leading-relaxed">
+          Regular expressions look like secret code when you start learning programming. 
+          RegexLab is a visual playground where you can watch patterns check each letter one by one, 
+          read plain English explanations, and build regex using simple blocks without fear.
         </p>
 
         {/* CTA Buttons */}
         <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
           <button
             onClick={() => setActiveView('playground')}
-            className="px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-primary/25 hover:scale-[1.02] active:scale-[0.98]"
+            className="px-6 py-3 rounded-xl bg-primary text-primary-fg font-bold text-sm hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98]"
           >
             <Play className="w-4 h-4 fill-current" />
             Open Playground
@@ -81,18 +80,18 @@ export const LandingHero: React.FC = () => {
 
           <button
             onClick={() => setActiveView('visualizer')}
-            className="px-6 py-3 rounded-xl bg-card hover:bg-muted text-foreground border border-border font-semibold text-sm transition-all flex items-center gap-2"
+            className="px-6 py-3 rounded-xl bg-surface-elevated hover:bg-surface text-foreground border border-border font-semibold text-sm transition-all flex items-center gap-2"
           >
             <Activity className="w-4 h-4 text-primary" />
-            Engine Visualizer
+            Step-by-Step Matcher
           </button>
 
           <button
             onClick={() => setActiveView('challenges')}
-            className="px-6 py-3 rounded-xl bg-card hover:bg-muted text-foreground border border-border font-semibold text-sm transition-all flex items-center gap-2"
+            className="px-6 py-3 rounded-xl bg-surface-elevated hover:bg-surface text-foreground border border-border font-semibold text-sm transition-all flex items-center gap-2"
           >
-            <Trophy className="w-4 h-4 text-amber-400" />
-            Practice Challenges
+            <Trophy className="w-4 h-4 text-primary" />
+            Practice Puzzles
           </button>
         </div>
       </div>
@@ -188,10 +187,10 @@ export const LandingHero: React.FC = () => {
       <div className="space-y-8">
         <div className="text-center space-y-2">
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
-            Built for Curiosity. Engineered for Production.
+            Made for beginners, loved by everyone.
           </h2>
-          <p className="text-xs sm:text-sm text-foreground/60 max-w-xl mx-auto">
-            Everything you need to master, construct, benchmark, and deploy regular expressions.
+          <p className="text-xs sm:text-sm text-foreground-muted max-w-xl mx-auto">
+            Everything you need to understand, build, and test regular expressions without getting overwhelmed.
           </p>
         </div>
 
@@ -201,42 +200,42 @@ export const LandingHero: React.FC = () => {
             <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
               <Activity className="w-5 h-5" />
             </div>
-            <h3 className="text-base font-bold text-foreground">Engine Visualizer</h3>
-            <p className="text-xs text-foreground/60 leading-relaxed">
-              Step through regex evaluation frame by frame. Watch the cursor advance, test conditions, explore branches, and backtrack in slow motion.
+            <h3 className="text-base font-bold text-foreground">Step-by-Step Matcher</h3>
+            <p className="text-xs text-foreground-muted leading-relaxed">
+              Watch regex read your text letter by letter. See the cursor move forward when it matches, and watch it back up and try another route when it fails.
             </p>
           </DoubleBezelCard>
 
           {/* Card 2 */}
           <DoubleBezelCard innerClassName="p-6 space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center border border-indigo-500/20">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
               <Zap className="w-5 h-5" />
             </div>
-            <h3 className="text-base font-bold text-foreground">Live Translator</h3>
-            <p className="text-xs text-foreground/60 leading-relaxed">
-              Never stare blindly at cryptic characters again. Translates tokens into structured natural English with bidirectional hover glow.
+            <h3 className="text-base font-bold text-foreground">Plain English Helper</h3>
+            <p className="text-xs text-foreground-muted leading-relaxed">
+              Never stare blindly at weird brackets and carets again. Translates cryptic regex characters into plain, simple English sentences.
             </p>
           </DoubleBezelCard>
 
           {/* Card 3 */}
           <DoubleBezelCard innerClassName="p-6 space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
               <Layers className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold text-foreground">No-Code Builder</h3>
-            <p className="text-xs text-foreground/60 leading-relaxed">
-              Assemble clean, robust expressions visually by stacking modular blocks for letters, digits, ranges, quantifiers, and groups.
+            <p className="text-xs text-foreground-muted leading-relaxed">
+              Assemble clean regex patterns by clicking simple visual blocks for letters, numbers, and words &mdash; no syntax memorization required.
             </p>
           </DoubleBezelCard>
 
           {/* Card 4 */}
           <DoubleBezelCard innerClassName="p-6 space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
               <ShieldCheck className="w-5 h-5" />
             </div>
-            <h3 className="text-base font-bold text-foreground">ReDoS & Compatibility</h3>
-            <p className="text-xs text-foreground/60 leading-relaxed">
-              Audit catastrophic backtracking O(2^N) risks and verify dialect compatibility across JS, Python, PCRE2, Java, Go, Rust, and .NET.
+            <h3 className="text-base font-bold text-foreground">Speed & Loop Check</h3>
+            <p className="text-xs text-foreground-muted leading-relaxed">
+              Check if your regex could freeze your browser. We run tests with longer and longer strings to see if your pattern gets stuck in slow loops.
             </p>
           </DoubleBezelCard>
         </div>

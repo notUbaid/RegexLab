@@ -125,7 +125,7 @@ export function translateRegexToHuman(pattern: string): ExplanationBlock[] {
         summary: `Matches the exact string "${combinedWord}" (case sensitive)`,
         depth: nestingDepth,
         badge: 'Literal Text',
-        badgeColor: 'text-sky-400 bg-sky-950/40 border-sky-800/50',
+        badgeColor: 'text-amber-400 bg-amber-950/40 border-amber-800/50',
       });
 
       tokenIndex = forwardIndex;
@@ -176,7 +176,7 @@ export function translateRegexToHuman(pattern: string): ExplanationBlock[] {
         summary: currentToken.humanExplanation,
         depth: nestingDepth,
         badge: 'Close Group',
-        badgeColor: 'text-slate-400 bg-slate-800/40 border-slate-700/50',
+        badgeColor: 'text-foreground-muted bg-muted border-border',
       });
 
       tokenIndex++;
@@ -256,8 +256,8 @@ export function translateRegexToHuman(pattern: string): ExplanationBlock[] {
       : 'Token';
 
     const badgeColor = currentToken.category === 'char-class'
-      ? 'text-cyan-400 bg-cyan-950/40 border-cyan-800/50'
-      : 'text-blue-400 bg-blue-950/40 border-blue-800/50';
+      ? 'text-teal-400 bg-teal-950/40 border-teal-800/50'
+      : 'text-orange-400 bg-orange-950/40 border-orange-800/50';
 
     explanationBlocks.push({
       id: `exp-${currentToken.start}`,

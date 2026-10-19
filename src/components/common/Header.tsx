@@ -33,48 +33,44 @@ export const Header: React.FC<HeaderProps> = ({ onOpenShare, onOpenCheatSheet })
 
   const navItems: { view: AppView; label: string; icon: React.ReactNode; badge?: string }[] = [
     { view: 'playground', label: 'Playground', icon: <Play className="w-3.5 h-3.5" /> },
-    { view: 'visualizer', label: 'Engine Visualizer', icon: <Workflow className="w-3.5 h-3.5" />, badge: 'Signature' },
-    { view: 'builder', label: 'Visual Builder', icon: <Blocks className="w-3.5 h-3.5" /> },
-    { view: 'ast', label: 'AST Explorer', icon: <Network className="w-3.5 h-3.5" /> },
-    { view: 'debugger', label: 'Debugger', icon: <Bug className="w-3.5 h-3.5" /> },
-    { view: 'performance', label: 'ReDoS & Perf', icon: <Gauge className="w-3.5 h-3.5" /> },
-    { view: 'compatibility', label: 'Compatibility', icon: <Globe2 className="w-3.5 h-3.5" /> },
-    { view: 'library', label: 'Library', icon: <Library className="w-3.5 h-3.5" /> },
+    { view: 'visualizer', label: 'Step-by-Step', icon: <Workflow className="w-3.5 h-3.5" /> },
+    { view: 'builder', label: 'No-Code Builder', icon: <Blocks className="w-3.5 h-3.5" /> },
+    { view: 'ast', label: 'Regex Tree', icon: <Network className="w-3.5 h-3.5" /> },
+    { view: 'debugger', label: 'Fix Errors', icon: <Bug className="w-3.5 h-3.5" /> },
+    { view: 'performance', label: 'Speed Check', icon: <Gauge className="w-3.5 h-3.5" /> },
+    { view: 'compatibility', label: 'Languages', icon: <Globe2 className="w-3.5 h-3.5" /> },
+    { view: 'library', label: 'Examples', icon: <Library className="w-3.5 h-3.5" /> },
     { view: 'compare', label: 'Compare', icon: <GitCompare className="w-3.5 h-3.5" /> },
-    { view: 'challenges', label: 'Challenges', icon: <Trophy className="w-3.5 h-3.5" />, badge: 'Gamified' },
+    { view: 'challenges', label: 'Practice', icon: <Trophy className="w-3.5 h-3.5" /> },
   ];
 
   const themes: { id: Theme; label: string; dotColor: string }[] = [
-    { id: 'dark', label: 'Dark (Slate)', dotColor: '#38bdf8' },
-    { id: 'light', label: 'Light (Clean)', dotColor: '#0284c7' },
-    { id: 'midnight', label: 'Midnight (Cosmic)', dotColor: '#818cf8' },
-    { id: 'oled', label: 'OLED (Pure Black)', dotColor: '#10b981' },
-    { id: 'nord', label: 'Nord (Arctic)', dotColor: '#88c0d0' },
-    { id: 'dracula', label: 'Dracula (Purple)', dotColor: '#ff79c6' },
+    { id: 'dark', label: 'Studio Obsidian', dotColor: '#f59e0b' },
+    { id: 'light', label: 'Studio Paper', dotColor: '#d97706' },
+    { id: 'midnight', label: 'Terracotta', dotColor: '#f97316' },
+    { id: 'oled', label: 'Pure Monolith', dotColor: '#ffffff' },
+    { id: 'nord', label: 'Studio Sage', dotColor: '#10b981' },
+    { id: 'dracula', label: 'Vintage Amber CRT', dotColor: '#eab308' },
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border-subtle bg-surface/85 backdrop-blur-xl transition-all duration-300">
+    <header className="sticky top-0 z-40 w-full border-b border-border bg-surface/90 backdrop-blur-xl transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
         {/* Brand Logo & Name */}
         <div 
           onClick={() => setActiveView('landing')} 
           className="flex items-center gap-2.5 cursor-pointer select-none group shrink-0"
         >
-          <div className="relative w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-500 via-indigo-500 to-purple-600 p-[1.5px] shadow-sm group-hover:shadow-glow-primary transition-all duration-300">
-            <div className="w-full h-full rounded-[10px] bg-surface flex items-center justify-center overflow-hidden">
-              <img src="/logo.svg" alt="RegexLab Logo" className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
-            </div>
+          <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/25 flex items-center justify-center text-primary group-hover:border-primary group-hover:bg-primary/15 transition-all duration-200">
+            <span className="font-mono font-bold text-xs">/r/</span>
           </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <span className="font-extrabold text-sm tracking-tight bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text">
-                Regex<span className="text-primary font-black">Lab</span>
-              </span>
-              <span className="px-1.5 py-0.2 rounded-full bg-primary/10 text-primary text-[9px] font-mono font-bold uppercase tracking-wider border border-primary/20">
-                v1.0
-              </span>
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-sm tracking-tight text-foreground">
+              Regex<span className="text-primary font-black">Lab</span>
+            </span>
+            <span className="px-1.5 py-0.5 rounded bg-surface-elevated text-foreground-dim text-[10px] font-mono border border-border">
+              beginner friendly
+            </span>
           </div>
         </div>
 

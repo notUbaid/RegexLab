@@ -99,7 +99,7 @@ export const ChallengesView: React.FC = () => {
           particleCount: 80,
           spread: 70,
           origin: { y: 0.6 },
-          colors: ['#38bdf8', '#818cf8', '#34d399', '#f472b6'],
+          colors: ['#f59e0b', '#f97316', '#10b981', '#eab308'],
         });
       } catch {}
     }
@@ -117,13 +117,13 @@ export const ChallengesView: React.FC = () => {
       case 'Novice':
         return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
       case 'Apprentice':
-        return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+        return 'bg-teal-500/10 text-teal-400 border-teal-500/20';
       case 'Adept':
-        return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+        return 'bg-violet-500/10 text-violet-400 border-violet-500/20';
       case 'Master':
         return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
       case 'Grandmaster':
-        return 'bg-red-500/10 text-red-400 border-red-500/20';
+        return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
       default:
         return 'bg-muted text-foreground/70 border-border';
     }
@@ -136,18 +136,18 @@ export const ChallengesView: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider">
-              Gamified Mastery
+              Practice Mode
             </span>
             <span className="text-xs text-foreground/60 flex items-center gap-1">
               <Trophy className="w-3.5 h-3.5 text-primary" />
-              Interactive Regex Challenges
+              Practice Puzzles
             </span>
           </div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
-            Regex Mastery Challenges
+            Practice What You Learned
           </h1>
           <p className="text-xs text-foreground/70 mt-0.5">
-            Test and sharpen your regular expression instincts across 11 progressive mastery levels from Novice to Grandmaster.
+            11 interactive puzzles to practice writing regex step by step, from beginner to advanced.
           </p>
         </div>
 
@@ -156,10 +156,10 @@ export const ChallengesView: React.FC = () => {
           <Award className="w-5 h-5 text-primary" />
           <div className="text-xs font-mono">
             <div className="font-bold text-foreground">
-              {completedChallenges.length} / {REGEX_CHALLENGES.length} Completed
+              {completedChallenges.length} / {REGEX_CHALLENGES.length} Solved
             </div>
             <div className="text-[10px] text-foreground/60">
-              {Math.round((completedChallenges.length / REGEX_CHALLENGES.length) * 100)}% Solved
+              {Math.round((completedChallenges.length / REGEX_CHALLENGES.length) * 100)}% Finished
             </div>
           </div>
         </div>
@@ -338,18 +338,18 @@ export const ChallengesView: React.FC = () => {
                     <Sparkles className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-emerald-400">Challenge Mastered!</h4>
+                    <h4 className="text-xs font-bold text-emerald-400">Puzzle Solved!</h4>
                     <p className="text-[11px] text-foreground/70">
-                      All test cases matched and rejected with surgical precision.
+                      Great job! All your test cases matched and passed correctly.
                     </p>
                   </div>
                 </div>
 
                 <button
                   onClick={handleNextChallenge}
-                  className="px-4 py-2 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs hover:opacity-90 transition-all flex items-center gap-1.5 shrink-0"
+                  className="px-4 py-2 rounded-xl bg-emerald-500 text-black font-bold text-xs hover:opacity-90 transition-all flex items-center gap-1.5 shrink-0"
                 >
-                  Next Challenge
+                  Next Puzzle
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>

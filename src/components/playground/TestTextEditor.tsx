@@ -165,20 +165,20 @@ export const TestTextEditor: React.FC = () => {
 
       {/* Group Palette Legend */}
       <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-foreground-muted shrink-0">
-        <span className="text-[10px] uppercase font-semibold text-foreground-dim tracking-wider">Group Legend:</span>
+        <span className="text-[10px] uppercase font-semibold text-foreground-dim tracking-wider">Group Colors:</span>
         <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary">
-          <span className="w-2 h-2 rounded-full bg-primary" /> Match (0)
+          <span className="w-2 h-2 rounded-full bg-primary" /> Full Match (0)
         </span>
-        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-indigo-950/40 border border-indigo-500/30 text-indigo-400">
-          <span className="w-2 h-2 rounded-full bg-indigo-400" /> Group 1
+        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400">
+          <span className="w-2 h-2 rounded-full bg-orange-400" /> Group 1
         </span>
-        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-purple-950/40 border border-purple-500/30 text-purple-400">
-          <span className="w-2 h-2 rounded-full bg-purple-400" /> Group 2
+        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+          <span className="w-2 h-2 rounded-full bg-emerald-400" /> Group 2
         </span>
-        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-950/40 border border-emerald-500/30 text-emerald-400">
-          <span className="w-2 h-2 rounded-full bg-emerald-400" /> Group 3
+        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/30 text-violet-400">
+          <span className="w-2 h-2 rounded-full bg-violet-400" /> Group 3
         </span>
-        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-950/40 border border-amber-500/30 text-amber-400">
+        <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-600/10 border border-amber-600/30 text-amber-300">
           <span className="w-2 h-2 rounded-full bg-amber-400" /> Group 4
         </span>
       </div>

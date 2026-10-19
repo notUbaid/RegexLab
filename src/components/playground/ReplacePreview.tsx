@@ -78,11 +78,11 @@ export const ReplacePreview: React.FC = () => {
       </div>
 
       {/* Replaced Live Output Box */}
-      <div className="rounded-xl bg-black/40 border border-white/5 p-3 max-h-36 overflow-y-auto">
+      <div className="rounded-xl bg-muted/50 border border-border/80 p-3 max-h-36 overflow-y-auto">
         <div className="text-[10px] font-semibold uppercase tracking-wider text-foreground-dim mb-1 flex items-center gap-1">
           <Sparkles className="w-3 h-3 text-primary" /> Transformed Output:
         </div>
-        <pre className="font-mono text-xs text-slate-200 whitespace-pre-wrap break-all leading-relaxed">
+        <pre className="font-mono text-xs text-foreground whitespace-pre-wrap break-all leading-relaxed">
           {replacedOutput}
         </pre>
       </div>

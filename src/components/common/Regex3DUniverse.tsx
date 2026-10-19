@@ -32,21 +32,21 @@ export const Regex3DUniverse: React.FC<Regex3DUniverseProps> = ({
     container.appendChild(renderer.domElement);
 
     // 2. Holographic Geometry & Particles
-    // Central geometric crystal representing regex DFA core
+    // Central geometric crystal representing regex pattern core
     const crystalGeo = new THREE.IcosahedronGeometry(7, 1);
     const crystalMat = new THREE.MeshBasicMaterial({
-      color: 0x38bdf8,
+      color: 0xf59e0b,
       wireframe: true,
       transparent: true,
-      opacity: 0.22,
+      opacity: 0.25,
     });
     const crystalMesh = new THREE.Mesh(crystalGeo, crystalMat);
     scene.add(crystalMesh);
 
-    // Outer orbital rings
+    // Outer orbital rings in warm brass and terracotta
     const ringGeo = new THREE.TorusGeometry(12, 0.08, 16, 100);
     const ringMat = new THREE.MeshBasicMaterial({
-      color: 0x818cf8,
+      color: 0xd97706,
       transparent: true,
       opacity: 0.35,
     });
@@ -59,17 +59,17 @@ export const Regex3DUniverse: React.FC<Regex3DUniverseProps> = ({
     ringMesh2.rotation.x = -Math.PI / 6;
     scene.add(ringMesh2);
 
-    // Floating particles (Syntax tokens cloud)
+    // Floating particles (Syntax tokens cloud in warm studio embers)
     const particlesGeo = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
 
     const colorChoices = [
-      new THREE.Color(0x38bdf8), // Cyan / Blue
-      new THREE.Color(0x818cf8), // Indigo
-      new THREE.Color(0x34d399), // Emerald
-      new THREE.Color(0xf472b6), // Pink
-      new THREE.Color(0xfbbf24), // Amber
+      new THREE.Color(0xf59e0b), // Solar Amber
+      new THREE.Color(0xf97316), // Warm Terracotta
+      new THREE.Color(0xeab308), // Golden Ochre
+      new THREE.Color(0x10b981), // Studio Sage
+      new THREE.Color(0xf5f5f4), // Warm Paper Titanium
     ];
 
     for (let i = 0; i < particleCount; i++) {

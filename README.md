@@ -42,21 +42,21 @@ RegexLab breaks it down into plain English steps:
 
 ## Visual Tour
 
-The application includes 11 dedicated tools, built in a dark obsidian theme with 6 switchable color palettes:
+The application includes 10 dedicated interactive tools, built in a warm studio obsidian theme with 6 tactile palettes:
 
 | View | Description | Screenshot |
 | :--- | :--- | :--- |
-| **01. Landing Hero** | Three.js 3D WebGL particle universe with an interactive live sandbox | [`screenshots/01-landing.png`](screenshots/01-landing.png) |
-| **02. Playground** | Real-time editor with sub-pixel match highlighting and regex substitution preview | [`screenshots/02-playground.png`](screenshots/02-playground.png) |
-| **03. Engine Visualizer** | Interactive D3.js Finite Automaton State Graph and step-by-step debugger | [`screenshots/03-visualizer.png`](screenshots/03-visualizer.png) |
-| **04. Visual Builder** | No-code block constructor with live regex compilation and plain-English preview | [`screenshots/04-builder.png`](screenshots/04-builder.png) |
-| **05. AST Explorer** | Hierarchical Abstract Syntax Tree with interactive pan and zoom controls | [`screenshots/05-ast.png`](screenshots/05-ast.png) |
-| **06. Regex Debugger** | Locates exact character offsets where matches fail and provides 1-click fixes | [`screenshots/06-debugger.png`](screenshots/06-debugger.png) |
-| **07. ReDoS Analyzer** | Catastrophic backtracking detector with interactive D3.js complexity curves | [`screenshots/07-performance.png`](screenshots/07-performance.png) |
-| **08. Compatibility** | 7-engine feature detection matrix (JS, Python, PCRE2, Java, Go, Rust, .NET) | [`screenshots/08-compatibility.png`](screenshots/08-compatibility.png) |
-| **09. Pattern Library** | Searchable catalog of production-tested regular expressions | [`screenshots/09-library.png`](screenshots/09-library.png) |
-| **10. Pattern Compare** | Side-by-side pattern comparison: readability, AST complexity, and steps | [`screenshots/10-compare.png`](screenshots/10-compare.png) |
-| **11. Challenges** | Progressive interactive puzzles (Novice to Grandmaster) with live tests | [`screenshots/11-challenges.png`](screenshots/11-challenges.png) |
+| **01. Landing Hero** | Three.js 3D WebGL amber particle universe with an interactive live sandbox | [`screenshots/01-landing.png`](screenshots/01-landing.png) |
+| **02. Playground** | Real-time regex testing with live match highlighting and replacement preview | [`screenshots/02-playground.png`](screenshots/02-playground.png) |
+| **03. Step-by-Step** | Step-by-step matcher showing how regex tests letters one by one with a visual path | [`screenshots/03-visualizer.png`](screenshots/03-visualizer.png) |
+| **04. No-Code Builder** | Click-to-build block builder with live regex compilation and plain-English preview | [`screenshots/04-builder.png`](screenshots/04-builder.png) |
+| **05. Regex Tree** | Visual family tree breaking down every part and group of your regex pattern | [`screenshots/05-ast.png`](screenshots/05-ast.png) |
+| **06. Fix Errors** | Debugger that pinpoints where your regex stopped matching and suggests 1-click fixes | [`screenshots/06-debugger.png`](screenshots/06-debugger.png) |
+| **07. Speed Check** | Speed and loop analyzer that checks if your pattern could freeze the browser or server | [`screenshots/07-performance.png`](screenshots/07-performance.png) |
+| **08. Languages** | Simple check to see if your regex works in Python, JS, Java, Go, Rust, or C# | [`screenshots/08-compatibility.png`](screenshots/08-compatibility.png) |
+| **09. Examples** | Searchable catalog of ready-to-use patterns for emails, passwords, URLs, and dates | [`screenshots/09-library.png`](screenshots/09-library.png) |
+| **10. Compare** | Side-by-side comparison to see which of two regex patterns is faster and simpler | [`screenshots/10-compare.png`](screenshots/10-compare.png) |
+| **11. Practice** | 11 beginner-friendly practice puzzles to test your skills from easy to advanced | [`screenshots/11-challenges.png`](screenshots/11-challenges.png) |
 
 ---
 
@@ -218,14 +218,14 @@ For complete technical documentation:
 
 ## Design System and Color Themes
 
-RegexLab includes 6 high-contrast themes accessible from the palette dropdown in the header:
+RegexLab includes 6 high-contrast, tactile themes accessible from the palette dropdown in the header:
 
-1. **Midnight Slate** (Default): Modern obsidian slate background with cyan accents.
-2. **Crisp Light**: Clean editorial white canvas with sapphire blue accents.
-3. **Cosmic Indigo**: Deep space dark navy with soft purple accents.
-4. **OLED Vantablack**: Pitch black (`#000000`) with emerald green highlights.
-5. **Nord Arctic**: Nordic frost palette with cool glacier blues.
-6. **Dracula Noir**: Dark vampire theme with pink and purple accents.
+1. **Studio Obsidian** (Default): Warm matte carbon (`#0c0d10`) with hairline titanium borders and solar amber (`#f59e0b`) accents.
+2. **Studio Paper**: Warm Japanese editorial paper (`#f8f7f4`), rich charcoal (`#17181c`), and warm amber (`#d97706`).
+3. **Terracotta**: Tactile espresso (`#110e0c`) with burnt orange and terracotta (`#f97316`) highlights.
+4. **Pure Monolith**: High-contrast pure black (`#000000`) and crisp white for distraction-free focus.
+5. **Studio Sage**: Calming dark forest (`#0f1311`) with natural sage emerald (`#10b981`).
+6. **Vintage Amber CRT**: Warm retro terminal aesthetic (`#121110`) with golden phosphor amber (`#eab308`).
 
 ---
 

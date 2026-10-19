@@ -81,7 +81,7 @@ export const MatchInspector: React.FC = () => {
               </div>
 
               {/* Matched text box */}
-              <div className="p-2.5 rounded-lg bg-black/40 border border-white/5 font-mono text-xs text-slate-200 break-all select-text">
+              <div className="p-2.5 rounded-lg bg-muted/50 border border-border/80 font-mono text-xs text-foreground break-all select-text">
                 {match.text}
               </div>
 

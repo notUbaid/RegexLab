@@ -215,8 +215,8 @@ if (preg_match_all($pattern, $text, $matches, PREG_SET_ORDER)) {
             </div>
           </div>
 
-          <div className="relative rounded-xl bg-black/60 border border-border-subtle overflow-hidden">
-            <pre className="p-4 text-xs font-mono text-slate-200 overflow-x-auto max-h-56 leading-relaxed">
+          <div className="relative rounded-xl bg-muted/60 border border-border overflow-hidden">
+            <pre className="p-4 text-xs font-mono text-foreground overflow-x-auto max-h-56 leading-relaxed">
               <code>{getCodeSnippet(selectedLang)}</code>
             </pre>
             <button

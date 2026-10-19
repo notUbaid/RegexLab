@@ -178,18 +178,18 @@ export const VisualBuilder: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider">
-              No-Code Constructor
+              No-Code Builder
             </span>
             <span className="text-xs text-foreground/60 flex items-center gap-1">
               <Sparkles className="w-3.5 h-3.5 text-primary" />
-              Visual Regex Builder
+              Easy Block Builder
             </span>
           </div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
-            Build Regex Visually
+            Build Regex with Blocks
           </h1>
           <p className="text-xs text-foreground/70 mt-0.5">
-            Stack modular pattern blocks to generate clean regular expressions without memorizing complex syntax.
+            Click blocks to build your regex piece by piece without needing to memorize tricky symbols.
           </p>
         </div>
 
@@ -218,7 +218,7 @@ export const VisualBuilder: React.FC = () => {
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold uppercase tracking-wider text-primary flex items-center gap-1.5">
             <ShieldCheck className="w-4 h-4" />
-            Live Compiled Regex
+            Your Resulting Regex Pattern
           </span>
           <span className="text-xs font-mono text-foreground/60">
             {builderBlocks.length} Blocks
@@ -226,7 +226,7 @@ export const VisualBuilder: React.FC = () => {
         </div>
 
         <div className="p-3.5 rounded-xl bg-background border border-border font-mono text-base text-foreground font-bold tracking-wide select-all overflow-x-auto">
-          {compiledRegex ? `/${compiledRegex}/` : <span className="text-foreground/40 font-normal italic">Add blocks below to compile regex...</span>}
+          {compiledRegex ? `/${compiledRegex}/` : <span className="text-foreground/40 font-normal italic">Click on presets on the right to start building...</span>}
         </div>
       </DoubleBezelCard>
 
@@ -236,10 +236,10 @@ export const VisualBuilder: React.FC = () => {
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
               <Layers className="w-4 h-4 text-primary" />
-              Pattern Blocks Sequence
+              Your Blocks in Order
             </h2>
             <span className="text-xs text-foreground/60">
-              Evaluated sequentially from top to bottom
+              Matched in order from top to bottom
             </span>
           </div>
 

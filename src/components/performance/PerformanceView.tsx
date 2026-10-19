@@ -64,7 +64,7 @@ export const PerformanceView: React.FC = () => {
       case 'medium':
         return { text: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30' };
       case 'low':
-        return { text: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/30' };
+        return { text: 'text-amber-300', bg: 'bg-amber-500/10', border: 'border-amber-500/20' };
       default:
         return { text: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30' };
     }
@@ -78,26 +78,26 @@ export const PerformanceView: React.FC = () => {
       <DoubleBezelCard innerClassName="p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider">
-              ReDoS & Complexity
+            <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20">
+              Safety Check
             </span>
-            <span className="text-xs text-foreground/60 flex items-center gap-1">
+            <span className="text-xs text-foreground-muted flex items-center gap-1">
               <Activity className="w-3.5 h-3.5 text-primary" />
-              Algorithmic Performance Analyzer
+              Speed & Loop Checker
             </span>
           </div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
-            Performance & Catastrophic Backtracking
+            Speed & Loop Safety Check
           </h1>
-          <p className="text-xs text-foreground/70 mt-0.5">
-            Identify catastrophic exponential backtracking O(2^N), ReDoS vulnerabilities, and nested quantifiers before production.
+          <p className="text-xs text-foreground-muted mt-0.5">
+            Check if your regex could get stuck in slow loops or freeze a browser when checking long text.
           </p>
         </div>
 
         {/* Quick action to playground */}
         <button
           onClick={() => setActiveView('playground')}
-          className="px-4 py-2 rounded-xl bg-card hover:bg-muted text-foreground border border-border text-xs font-semibold flex items-center gap-1.5 transition-all self-stretch md:self-auto justify-center"
+          className="px-4 py-2 rounded-xl bg-surface-elevated hover:bg-surface text-foreground border border-border text-xs font-semibold flex items-center gap-1.5 transition-all self-stretch md:self-auto justify-center"
         >
           <Play className="w-3.5 h-3.5" />
           Open Playground
@@ -109,9 +109,9 @@ export const PerformanceView: React.FC = () => {
         {/* Risk Score Meter */}
         <DoubleBezelCard innerClassName={`p-6 space-y-3 ${riskTheme.bg} ${riskTheme.border}`}>
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-foreground/70 flex items-center gap-1.5">
+            <span className="text-xs font-bold uppercase tracking-wider text-foreground-muted flex items-center gap-1.5">
               <Flame className="w-4 h-4 text-primary" />
-              ReDoS Vulnerability Risk
+              Slow Loop Risk
             </span>
             <span className={`px-2 py-0.5 rounded font-mono text-xs font-bold uppercase border ${riskTheme.bg} ${riskTheme.text} ${riskTheme.border}`}>
               {analysis.riskLevel}
@@ -122,7 +122,7 @@ export const PerformanceView: React.FC = () => {
             <span className={`text-4xl font-extrabold font-mono ${riskTheme.text}`}>
               {analysis.riskScore}
             </span>
-            <span className="text-xs text-foreground/50 font-mono">/ 100 Risk Score</span>
+            <span className="text-xs text-foreground-dim font-mono">/ 100 Risk Score</span>
           </div>
 
           <div className="w-full bg-muted/60 h-2 rounded-full overflow-hidden">
@@ -131,7 +131,7 @@ export const PerformanceView: React.FC = () => {
               className={`h-full transition-all duration-500 ${
                 analysis.riskLevel === 'critical' ? 'bg-red-500' :
                 analysis.riskLevel === 'medium' ? 'bg-amber-500' :
-                analysis.riskLevel === 'low' ? 'bg-blue-500' : 'bg-emerald-500'
+                analysis.riskLevel === 'low' ? 'bg-teal-500' : 'bg-emerald-500'
               }`}
             />
           </div>
@@ -142,7 +142,7 @@ export const PerformanceView: React.FC = () => {
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-foreground/70 flex items-center gap-1.5">
               <Cpu className="w-4 h-4 text-primary" />
-              Time Complexity
+              Pattern Speed & Efficiency
             </span>
           </div>
 
@@ -152,10 +152,10 @@ export const PerformanceView: React.FC = () => {
 
           <p className="text-xs text-foreground/60 leading-relaxed">
             {analysis.complexityCategory.includes('Exponential')
-              ? 'Catastrophic exponential runtime! Input strings with repeated prefixes cause engine hang.'
+              ? 'Watch out: This pattern can freeze the browser or server because it tries too many combinations when text repeats.'
               : analysis.complexityCategory.includes('Polynomial')
-              ? 'Polynomial runtime with potential slow spots under repetitive ambiguous text.'
-              : 'Safe linear runtime: evaluation scales directly with input text length.'}
+              ? 'Caution: Can be a bit slow on really long text with repeated words or letters.'
+              : 'Super fast! The engine checks each letter directly without getting stuck in loops.'}
           </p>
         </DoubleBezelCard>
 
@@ -164,10 +164,10 @@ export const PerformanceView: React.FC = () => {
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-foreground/70 flex items-center gap-1.5 mb-2">
               <Clock className="w-4 h-4 text-primary" />
-              Stress Benchmark
+              Quick Speed Test
             </span>
             <p className="text-xs text-foreground/60">
-              Simulate 25-character adversarial prefix against your regex engine.
+              Test how fast this pattern runs on a sample tricky 25-letter text.
             </p>
           </div>
 
@@ -191,7 +191,7 @@ export const PerformanceView: React.FC = () => {
               className="w-full py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-all flex items-center justify-center gap-2"
             >
               <Play className="w-3.5 h-3.5 fill-current" />
-              {benchmarking ? 'Running Stress Test...' : 'Run Adversarial Test'}
+              {benchmarking ? 'Checking Speed...' : 'Run Speed Test'}
             </button>
           </div>
         </DoubleBezelCard>

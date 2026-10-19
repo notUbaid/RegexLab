@@ -100,13 +100,13 @@ export const D3ComplexityChart: React.FC<D3ComplexityChartProps> = ({
     g.append('path')
       .datum(polyData)
       .attr('fill', 'none')
-      .attr('stroke', '#38bdf8')
+      .attr('stroke', '#f59e0b')
       .attr('stroke-width', 2)
       .attr('stroke-dasharray', isPoly ? 'none' : '3,3')
       .attr('opacity', isPoly ? 1 : 0.4)
       .attr('d', lineGenerator);
 
-    // Exponential Curve (ReDoS)
+    // Exponential Curve (Potential slow loop)
     const expPath = g.append('path')
       .datum(expData)
       .attr('fill', 'none')
@@ -116,7 +116,7 @@ export const D3ComplexityChart: React.FC<D3ComplexityChartProps> = ({
       .attr('opacity', isExp ? 1 : 0.4)
       .attr('d', lineGenerator);
 
-    // If current pattern is exponential, add animated pulsing marker
+    // If current pattern is exponential, add animated marker
     if (isExp) {
       g.append('circle')
         .attr('cx', xScale(15))
@@ -130,25 +130,25 @@ export const D3ComplexityChart: React.FC<D3ComplexityChartProps> = ({
         .attr('fill', '#ef4444')
         .attr('font-size', '10px')
         .attr('font-weight', 'bold')
-        .text('ReDoS Explosion O(2^N)');
+        .text('Warning: Slow loop detected!');
     }
   }, [riskScore, complexityCategory]);
 
   return (
-    <div className={`relative w-full rounded-2xl bg-slate-950/80 border border-slate-800/80 p-4 shadow-xl ${className}`}>
-      <div className="flex items-center justify-between pb-2 border-b border-slate-800/60 mb-2">
-        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-          D3 Theoretical Execution Curve
+    <div className={`relative w-full rounded-2xl bg-surface border border-border p-4 shadow-xl ${className}`}>
+      <div className="flex items-center justify-between pb-2 border-b border-border mb-2">
+        <span className="text-xs font-bold uppercase tracking-wider text-foreground-muted">
+          Speed & Step Growth Chart
         </span>
         <div className="flex items-center gap-3 text-[10px] font-mono">
           <span className="flex items-center gap-1 text-emerald-400">
-            <span className="w-2 h-0.5 bg-emerald-400" /> Linear O(N)
+            <span className="w-2 h-0.5 bg-emerald-400" /> Fast (linear)
           </span>
-          <span className="flex items-center gap-1 text-sky-400">
-            <span className="w-2 h-0.5 bg-sky-400" /> Polynomial O(N^k)
+          <span className="flex items-center gap-1 text-amber-400">
+            <span className="w-2 h-0.5 bg-amber-400" /> Normal
           </span>
           <span className="flex items-center gap-1 text-red-400 font-bold">
-            <span className="w-2 h-0.5 bg-red-400" /> Exponential O(2^N)
+            <span className="w-2 h-0.5 bg-red-400" /> Slow Loop Warning
           </span>
         </div>
       </div>

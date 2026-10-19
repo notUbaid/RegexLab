@@ -118,13 +118,13 @@ export const PatternCompareView: React.FC = () => {
       {/* Dual Input Panels */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Pattern A Input */}
-        <DoubleBezelCard innerClassName="p-5 space-y-3 border-blue-500/30">
+        <DoubleBezelCard innerClassName="p-5 space-y-3 border-amber-500/30">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="w-6 h-6 rounded-md bg-blue-500/10 text-blue-400 font-bold font-mono text-xs flex items-center justify-center border border-blue-500/20">
+              <span className="w-6 h-6 rounded-md bg-amber-500/10 text-amber-400 font-bold font-mono text-xs flex items-center justify-center border border-amber-500/20">
                 A
               </span>
-              <h3 className="text-sm font-bold text-foreground">Pattern A (Primary)</h3>
+              <h3 className="text-sm font-bold text-foreground">Pattern A (First Pattern)</h3>
             </div>
             <span className="text-xs font-mono text-foreground/50">{pattern.length} chars</span>
           </div>
@@ -144,13 +144,13 @@ export const PatternCompareView: React.FC = () => {
         </DoubleBezelCard>
 
         {/* Pattern B Input */}
-        <DoubleBezelCard innerClassName="p-5 space-y-3 border-purple-500/30">
+        <DoubleBezelCard innerClassName="p-5 space-y-3 border-orange-500/30">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="w-6 h-6 rounded-md bg-purple-500/10 text-purple-400 font-bold font-mono text-xs flex items-center justify-center border border-purple-500/20">
+              <span className="w-6 h-6 rounded-md bg-orange-500/10 text-orange-400 font-bold font-mono text-xs flex items-center justify-center border border-orange-500/20">
                 B
               </span>
-              <h3 className="text-sm font-bold text-foreground">Pattern B (Alternative)</h3>
+              <h3 className="text-sm font-bold text-foreground">Pattern B (Second Pattern)</h3>
             </div>
             <span className="text-xs font-mono text-foreground/50">{comparePattern.length} chars</span>
           </div>
@@ -174,17 +174,17 @@ export const PatternCompareView: React.FC = () => {
       <DoubleBezelCard innerClassName="p-6 space-y-4">
         <h3 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2 pb-2 border-b border-border">
           <Cpu className="w-4 h-4 text-primary" />
-          Comparative Analysis Scorecard
+          Which Pattern Works Better? (Comparison)
         </h3>
 
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
             <thead>
               <tr className="border-b border-border/80 text-foreground/60">
-                <th className="py-2.5 font-semibold">Evaluation Metric</th>
-                <th className="py-2.5 font-semibold text-blue-400">Pattern A</th>
-                <th className="py-2.5 font-semibold text-purple-400">Pattern B</th>
-                <th className="py-2.5 font-semibold text-right">Advantage</th>
+                <th className="py-2.5 font-semibold">What We Are Comparing</th>
+                <th className="py-2.5 font-semibold text-amber-400">Pattern A</th>
+                <th className="py-2.5 font-semibold text-orange-400">Pattern B</th>
+                <th className="py-2.5 font-semibold text-right">Winner</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/40 font-mono">

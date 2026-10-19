@@ -42,19 +42,19 @@ export const RegexDebuggerView: React.FC = () => {
       <DoubleBezelCard innerClassName="p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider">
-              Smart Diagnostics
+            <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20">
+              Helper Tool
             </span>
-            <span className="text-xs text-foreground/60 flex items-center gap-1">
+            <span className="text-xs text-foreground-muted flex items-center gap-1">
               <Bug className="w-3.5 h-3.5 text-primary" />
-              Intelligent Regex Debugger
+              Match Helper
             </span>
           </div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
-            Regex Failure Debugger
+            Fix My Regex: Find Where It Stopped
           </h1>
-          <p className="text-xs text-foreground/70 mt-0.5">
-            Never wonder why a pattern failed to match again. Inspect exact character failure positions, expected tokens, and actionable fixes.
+          <p className="text-xs text-foreground-muted mt-0.5">
+            Find out exactly which letter caused your regex to stop matching, see what character it was looking for, and get 1-click tips to fix it.
           </p>
         </div>
 
@@ -156,8 +156,8 @@ export const RegexDebuggerView: React.FC = () => {
       {!diagnosis.matched && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Expected */}
-          <DoubleBezelCard innerClassName="p-5 space-y-3 bg-blue-500/5 border-blue-500/20">
-            <div className="flex items-center gap-2 text-blue-400 text-xs font-bold uppercase tracking-wider">
+          <DoubleBezelCard innerClassName="p-5 space-y-3 bg-primary/5 border-primary/20">
+            <div className="flex items-center gap-2 text-primary text-xs font-bold uppercase tracking-wider">
               <Code2 className="w-4 h-4" />
               What Pattern Expected
             </div>
@@ -167,7 +167,7 @@ export const RegexDebuggerView: React.FC = () => {
               </p>
             </div>
             <p className="text-xs text-foreground/60">
-              The regex state machine looked for this token or anchor at this position.
+              Your regex pattern was looking for this character or rule at this point in the text.
             </p>
           </DoubleBezelCard>
 

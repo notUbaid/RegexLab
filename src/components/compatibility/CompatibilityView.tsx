@@ -51,19 +51,19 @@ export const CompatibilityView: React.FC = () => {
       <DoubleBezelCard innerClassName="p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider">
-              Cross-Language Portability
+            <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20">
+              Language Support
             </span>
-            <span className="text-xs text-foreground/60 flex items-center gap-1">
+            <span className="text-xs text-foreground-muted flex items-center gap-1">
               <Globe className="w-3.5 h-3.5 text-primary" />
-              Multi-Engine Compatibility Checker
+              Language Cheat Sheet
             </span>
           </div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
-            Engine Compatibility Matrix
+            Does It Work in Your Language?
           </h1>
-          <p className="text-xs text-foreground/70 mt-0.5">
-            Compare regex behavior and dialect nuances across 7 major runtime engines: JavaScript, Python, PCRE2, Java, Go, Rust, and .NET.
+          <p className="text-xs text-foreground-muted mt-0.5">
+            See if your regex pattern works in Python, JavaScript, Java, Go, Rust, or C# without syntax errors.
           </p>
         </div>
 

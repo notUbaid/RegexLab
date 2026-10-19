@@ -19,13 +19,13 @@ import { DoubleBezelCard } from '../common/DoubleBezelCard';
 
 const TYPE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   Expression: { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/30' },
-  Group: { bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/30' },
-  CharacterClass: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30' },
+  Group: { bg: 'bg-violet-500/10', text: 'text-violet-400', border: 'border-violet-500/30' },
+  CharacterClass: { bg: 'bg-teal-500/10', text: 'text-teal-400', border: 'border-teal-500/30' },
   Quantifier: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/30' },
-  Anchor: { bg: 'bg-cyan-500/10', text: 'text-cyan-400', border: 'border-cyan-500/30' },
-  Literal: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/30' },
-  Lookaround: { bg: 'bg-fuchsia-500/10', text: 'text-fuchsia-400', border: 'border-fuchsia-500/30' },
-  Alternative: { bg: 'bg-indigo-500/10', text: 'text-indigo-400', border: 'border-indigo-500/30' },
+  Anchor: { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/30' },
+  Literal: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30' },
+  Lookaround: { bg: 'bg-pink-500/10', text: 'text-pink-400', border: 'border-pink-500/30' },
+  Alternative: { bg: 'bg-amber-600/10', text: 'text-amber-300', border: 'border-amber-600/30' },
   Disjunction: { bg: 'bg-rose-500/10', text: 'text-rose-400', border: 'border-rose-500/30' },
 };
 
@@ -170,19 +170,19 @@ export const AstVisualizer: React.FC = () => {
       <DoubleBezelCard innerClassName="p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider">
-              Syntax Tree
+            <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20">
+              Visual Structure
             </span>
-            <span className="text-xs text-foreground/60 flex items-center gap-1">
+            <span className="text-xs text-foreground-muted flex items-center gap-1">
               <FolderTree className="w-3.5 h-3.5 text-primary" />
-              Hierarchical AST Visualizer
+              Pattern Tree
             </span>
           </div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
-            Regex Syntax Tree
+            Regex Tree: Parts of Your Pattern
           </h1>
-          <p className="text-xs text-foreground/70 mt-0.5">
-            Inspect the abstract syntax tree parsed from your regex. Explore nested groups, quantifiers, and branches.
+          <p className="text-xs text-foreground-muted mt-0.5">
+            Break down your regex pattern into simple pieces like letters, numbers, repeating quantifiers, and groups.
           </p>
         </div>
 

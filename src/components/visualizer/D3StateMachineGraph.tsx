@@ -70,7 +70,7 @@ export const D3StateMachineGraph: React.FC<D3StateMachineGraphProps> = ({
       .attr('orient', 'auto-start-reverse')
       .append('path')
       .attr('d', 'M 0 1.5 L 10 5 L 0 8.5 z')
-      .attr('fill', '#38bdf8');
+      .attr('fill', '#f59e0b');
 
     // Glow filter
     const filter = defs.append('filter')
@@ -183,7 +183,7 @@ export const D3StateMachineGraph: React.FC<D3StateMachineGraphProps> = ({
 
     // Highlight active link if matching
     linkElements
-      .attr('stroke', (d) => (d.target === activeNodeId ? '#38bdf8' : '#334155'))
+      .attr('stroke', (d) => (d.target === activeNodeId ? '#f59e0b' : '#334155'))
       .attr('stroke-width', (d) => (d.target === activeNodeId ? 3 : 1.5))
       .attr('marker-end', (d) => (d.target === activeNodeId ? 'url(#arrow-active)' : 'url(#arrow)'));
 
@@ -196,7 +196,7 @@ export const D3StateMachineGraph: React.FC<D3StateMachineGraphProps> = ({
         if (s && t) {
           const pulse = g.append('circle')
             .attr('r', 4.5)
-            .attr('fill', '#38bdf8')
+            .attr('fill', '#f59e0b')
             .attr('cx', s.x)
             .attr('cy', s.y)
             .attr('filter', 'url(#node-glow)');
@@ -224,13 +224,13 @@ export const D3StateMachineGraph: React.FC<D3StateMachineGraphProps> = ({
     nodeGroups.append('circle')
       .attr('r', (d) => (d.type === 'token' ? 18 : 22))
       .attr('fill', (d) => {
-        if (d.id === activeNodeId) return '#0369a1';
+        if (d.id === activeNodeId) return '#b45309';
         if (d.type === 'start') return '#1e293b';
         if (d.type === 'accept') return '#064e3b';
         return '#0f172a';
       })
       .attr('stroke', (d) => {
-        if (d.id === activeNodeId) return '#38bdf8';
+        if (d.id === activeNodeId) return '#f59e0b';
         if (d.type === 'start') return '#64748b';
         if (d.type === 'accept') return '#10b981';
         return '#334155';
@@ -243,7 +243,7 @@ export const D3StateMachineGraph: React.FC<D3StateMachineGraphProps> = ({
       .append('circle')
       .attr('r', 28)
       .attr('fill', 'none')
-      .attr('stroke', '#38bdf8')
+      .attr('stroke', '#f59e0b')
       .attr('stroke-width', 1.5)
       .attr('opacity', 0.8)
       .transition()
@@ -294,39 +294,39 @@ export const D3StateMachineGraph: React.FC<D3StateMachineGraphProps> = ({
   };
 
   return (
-    <div className={`relative w-full rounded-2xl bg-slate-950/80 border border-slate-800/80 p-2 overflow-hidden shadow-2xl ${className}`}>
+    <div className={`relative w-full rounded-2xl bg-card border border-border p-2 overflow-hidden shadow-sm ${className}`}>
       {/* Top Overlay Controls */}
-      <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-slate-900/80 backdrop-blur-md p-1 rounded-xl border border-slate-700/60 shadow-lg">
+      <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-surface/90 backdrop-blur-md p-1 rounded-xl border border-border shadow-md">
         <button
           onClick={handleZoomOut}
           title="Zoom Out"
-          className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-all"
+          className="p-1.5 rounded-lg hover:bg-muted text-foreground-muted hover:text-foreground transition-all"
         >
           <ZoomOut className="w-3.5 h-3.5" />
         </button>
-        <span className="text-[10px] font-mono font-bold text-slate-300 px-1">
+        <span className="text-[10px] font-mono font-bold text-foreground px-1">
           {Math.round(zoomScale * 100)}%
         </span>
         <button
           onClick={handleZoomIn}
           title="Zoom In"
-          className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-all"
+          className="p-1.5 rounded-lg hover:bg-muted text-foreground-muted hover:text-foreground transition-all"
         >
           <ZoomIn className="w-3.5 h-3.5" />
         </button>
         <button
           onClick={handleResetZoom}
           title="Reset Zoom & Pan"
-          className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-all border-l border-slate-700/60 pl-1.5"
+          className="p-1.5 rounded-lg hover:bg-muted text-foreground-muted hover:text-foreground transition-all border-l border-border pl-1.5"
         >
           <RotateCcw className="w-3.5 h-3.5" />
         </button>
       </div>
 
       <div className="absolute top-3 left-4 z-10 flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-        <span className="text-[11px] font-mono font-bold tracking-wider text-slate-400 uppercase">
-          D3 Finite Automaton State Graph
+        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+        <span className="text-[11px] font-mono font-bold tracking-wider text-foreground-muted uppercase">
+          Step Path: How Regex Checks Each Part
         </span>
       </div>
 

@@ -127,36 +127,36 @@ export const EngineVisualizer: React.FC = () => {
       case 'success':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-            <CheckCircle2 className="w-3.5 h-3.5" /> Match Complete
+            <CheckCircle2 className="w-3.5 h-3.5" /> Found Match!
           </span>
         );
       case 'fail':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/15 text-red-400 border border-red-500/30">
-            <XCircle className="w-3.5 h-3.5" /> Match Failed
+            <XCircle className="w-3.5 h-3.5" /> No Match Here
           </span>
         );
       case 'backtrack':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30 animate-pulse">
-            <AlertTriangle className="w-3.5 h-3.5" /> Backtracking
+            <AlertTriangle className="w-3.5 h-3.5" /> Backing Up (trying another path)
           </span>
         );
       case 'branch_start':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-500/15 text-purple-400 border border-purple-500/30">
-            Branching
+            Checking Options
           </span>
         );
       case 'match_char':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/30">
-            Character Match
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/15 text-primary border border-primary/30">
+            Matched Letter
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-muted text-foreground/80 border border-border">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-elevated text-foreground-muted border border-border">
             {action.replace('_', ' ')}
           </span>
         );
@@ -168,13 +168,13 @@ export const EngineVisualizer: React.FC = () => {
       <div className="max-w-4xl mx-auto py-12 px-4 text-center">
         <DoubleBezelCard innerClassName="p-12 text-center">
           <Code2 className="w-12 h-12 text-primary mx-auto mb-4 opacity-80" />
-          <h2 className="text-xl font-bold text-foreground mb-2">No Regex Pattern Entered</h2>
-          <p className="text-sm text-foreground/70 mb-6 max-w-md mx-auto">
-            Please enter a regular expression in the Playground to step through its execution frame by frame.
+          <h2 className="text-xl font-bold text-foreground mb-2">No Regex Pattern Entered Yet</h2>
+          <p className="text-sm text-foreground-muted mb-6 max-w-md mx-auto">
+            Type a pattern in the Playground first, then come back here to watch it read your text one letter at a time!
           </p>
           <button
             onClick={() => setActiveView('playground')}
-            className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-medium text-sm hover:opacity-90 transition-all shadow-md shadow-primary/20"
+            className="px-5 py-2.5 rounded-xl bg-primary text-primary-fg font-medium text-sm hover:opacity-90 transition-all shadow-md shadow-primary/20"
           >
             Go to Playground
           </button>
@@ -189,19 +189,19 @@ export const EngineVisualizer: React.FC = () => {
       <DoubleBezelCard innerClassName="p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider">
-              Signature Feature
+            <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20">
+              Interactive Guide
             </span>
-            <span className="text-xs text-foreground/60 flex items-center gap-1">
+            <span className="text-xs text-foreground-muted flex items-center gap-1">
               <Activity className="w-3.5 h-3.5 text-primary" />
-              State Machine Debugger
+              Step-by-Step Reader
             </span>
           </div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
-            Regex Engine Visualizer
+            Step-by-Step Matcher
           </h1>
-          <p className="text-xs text-foreground/70 mt-0.5">
-            Watch the regex state machine think in slow motion: cursor advances, branch decisions, and backtracks.
+          <p className="text-xs text-foreground-muted mt-0.5">
+            Watch regex read your text letter by letter. See when it matches, when it skips ahead, and when it backs up to try another way.
           </p>
         </div>
 
@@ -357,7 +357,7 @@ export const EngineVisualizer: React.FC = () => {
                       key={idx}
                       className={`inline-block px-1 py-0.5 rounded transition-all duration-150 ${
                         isCursor
-                          ? 'bg-amber-500 text-slate-950 font-bold ring-2 ring-amber-400 ring-offset-1 ring-offset-background shadow-md'
+                          ? 'bg-amber-500 text-black font-bold ring-2 ring-amber-400 ring-offset-1 ring-offset-background shadow-md'
                           : isMatched
                           ? 'bg-emerald-500/20 text-emerald-400 font-medium'
                           : 'text-foreground/75'

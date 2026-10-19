@@ -72,18 +72,18 @@ export const PatternLibraryView: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider">
-              Battle-Tested Catalog
+              Ready-to-Use
             </span>
             <span className="text-xs text-foreground/60 flex items-center gap-1">
               <BookOpen className="w-3.5 h-3.5 text-primary" />
-              Production Pattern Library
+              Common Examples
             </span>
           </div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
-            Curated Regex Patterns
+            Popular Regex Examples
           </h1>
           <p className="text-xs text-foreground/70 mt-0.5">
-            Production-grade, secure regular expressions for validation, parsing, network, and security tasks.
+            Ready-to-use patterns for emails, passwords, phone numbers, URLs, dates, and numbers.
           </p>
         </div>
 

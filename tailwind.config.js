@@ -34,14 +34,14 @@ export default {
           rose: '#f43f5e',
         },
         group: {
-          0: '#38bdf8', // Match full: Sky blue
-          1: '#818cf8', // Group 1: Indigo
-          2: '#c084fc', // Group 2: Purple
-          3: '#34d399', // Group 3: Emerald
-          4: '#fbbf24', // Group 4: Amber
-          5: '#f472b6', // Group 5: Pink
-          6: '#2dd4bf', // Group 6: Teal
-          7: '#fb7185', // Group 7: Rose
+          0: '#f59e0b', // Match full: Warm Solar Amber
+          1: '#f43f5e', // Group 1: Terracotta Rose
+          2: '#10b981', // Group 2: Sage Emerald
+          3: '#8b5cf6', // Group 3: Electric Violet
+          4: '#f97316', // Group 4: Persimmon Orange
+          5: '#ec4899', // Group 5: Studio Pink
+          6: '#14b8a6', // Group 6: Vintage Teal
+          7: '#eab308', // Group 7: Gold Ochre
         }
       },
       fontFamily: {
