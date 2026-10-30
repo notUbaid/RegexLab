@@ -7,6 +7,7 @@ import { TraceDebugger } from './TraceDebugger';
 import { PerformancePane } from './PerformancePane';
 import { CompatibilityPane } from './CompatibilityPane';
 import { ExplanationPane } from './ExplanationPane';
+import { soundFX } from '../utils/soundEffects';
 
 export type InspectorTab =
   | 'visualizer'
@@ -73,12 +74,13 @@ export const Inspector: React.FC<InspectorProps> = ({
               <button
                 key={t.id}
                 onClick={() => {
+                  soundFX.playTab();
                   onSelectTab(t.id);
                   if (isCollapsed) onToggleCollapse();
                 }}
-                className={`px-3 py-1 rounded text-xs transition-colors ${
+                className={`px-3 py-1 rounded text-xs transition-all ${
                   isActive
-                    ? 'bg-surface-elevated text-foreground font-semibold border border-border'
+                    ? 'bg-surface-elevated text-foreground font-semibold border border-border shadow-sm'
                     : 'text-foreground-muted hover:text-foreground hover:bg-surface'
                 }`}
               >
@@ -95,7 +97,10 @@ export const Inspector: React.FC<InspectorProps> = ({
           </span>
           {!isCollapsed && (
             <button
-              onClick={() => setIsExpanded(!isExpanded)}
+              onClick={() => {
+                soundFX.playLatch();
+                setIsExpanded(!isExpanded);
+              }}
               className="p-1 rounded text-foreground-dim hover:text-foreground hover:bg-surface-elevated transition-colors"
               title={isExpanded ? 'Restore height' : 'Expand height (h-96)'}
             >
@@ -103,7 +108,10 @@ export const Inspector: React.FC<InspectorProps> = ({
             </button>
           )}
           <button
-            onClick={onToggleCollapse}
+            onClick={() => {
+              soundFX.playLatch();
+              onToggleCollapse();
+            }}
             className="p-1 rounded text-foreground-dim hover:text-foreground hover:bg-surface-elevated transition-colors"
             title={isCollapsed ? 'Expand Inspector' : 'Collapse Inspector'}
           >
@@ -114,12 +122,15 @@ export const Inspector: React.FC<InspectorProps> = ({
 
       {/* Pane Content */}
       {!isCollapsed && (
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-hidden animate-tab-enter">
           {activeTab === 'visualizer' && (
             <Railroad
               tokens={analysis.tokens}
               hoveredTokenId={hoveredTokenId}
-              onHoverToken={onHoverToken}
+              onHoverToken={(id) => {
+                if (id) soundFX.playHoverPlink();
+                onHoverToken(id);
+              }}
             />
           )}
 
@@ -127,7 +138,10 @@ export const Inspector: React.FC<InspectorProps> = ({
             <AstTree
               ast={analysis.ast}
               hoveredTokenId={hoveredTokenId}
-              onHoverToken={onHoverToken}
+              onHoverToken={(id) => {
+                if (id) soundFX.playHoverPlink();
+                onHoverToken(id);
+              }}
             />
           )}
 
@@ -157,7 +171,10 @@ export const Inspector: React.FC<InspectorProps> = ({
             <ExplanationPane
               explanation={analysis.explanation}
               hoveredTokenId={hoveredTokenId}
-              onHoverToken={onHoverToken}
+              onHoverToken={(id) => {
+                if (id) soundFX.playHoverPlink();
+                onHoverToken(id);
+              }}
             />
           )}
         </div>

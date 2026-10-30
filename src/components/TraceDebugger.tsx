@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, SkipBack, SkipForward, RotateCcw, Wrench } from 'lucide-react';
 import { TraceStep } from '../engine/types';
+import { soundFX } from '../utils/soundEffects';
 
 interface TraceDebuggerProps {
   trace: TraceStep[];
@@ -26,6 +27,13 @@ export const TraceDebugger: React.FC<TraceDebuggerProps> = ({
     setCurrentStepIdx(0);
     setIsPlaying(false);
   }, [trace]);
+
+  // Play audio tick on step advance
+  useEffect(() => {
+    if (trace.length > 0 && currentStepIdx > 0) {
+      soundFX.playStepTick();
+    }
+  }, [currentStepIdx]);
 
   // Autoplay loop
   useEffect(() => {
@@ -75,6 +83,7 @@ export const TraceDebugger: React.FC<TraceDebuggerProps> = ({
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => {
+              soundFX.playLatch();
               setIsPlaying(false);
               setCurrentStepIdx(0);
             }}
@@ -94,9 +103,12 @@ export const TraceDebugger: React.FC<TraceDebuggerProps> = ({
             <SkipBack className="w-3.5 h-3.5" />
           </button>
           <button
-            onClick={() => setIsPlaying(!isPlaying)}
-            className="px-2 py-1 rounded bg-foreground text-background font-semibold flex items-center gap-1 text-[11px] transition-colors"
-            title={isPlaying ? 'Pause' : 'Play trace'}
+            onClick={() => {
+              soundFX.playLatch();
+              setIsPlaying(!isPlaying);
+            }}
+            className="px-2 py-1 rounded bg-foreground text-background font-semibold flex items-center gap-1 text-[11px] transition-all hover:bg-foreground/90 active:scale-95 shadow-sm"
+            title={isPlaying ? 'Pause trace' : 'Auto-play trace'}
           >
             {isPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
             <span>{isPlaying ? 'Pause' : 'Play'}</span>
@@ -131,7 +143,7 @@ export const TraceDebugger: React.FC<TraceDebuggerProps> = ({
 
       {/* 1-Click Fix Banner if failed */}
       {!hasMatched && failureStep && onApplyFix && (
-        <div className="p-2 mb-2 rounded bg-rose-500/10 border border-rose-500/30 flex items-center justify-between text-[11px]">
+        <div className="p-2 mb-2 rounded bg-rose-500/10 border border-rose-500/30 flex items-center justify-between text-[11px] animate-modal-pop">
           <div className="flex items-center gap-2 text-rose-300">
             <span>
               Failed at char <strong>'{failureStep.char}'</strong> (index {failureStep.charIndex}): {failureStep.explanation}
@@ -139,8 +151,11 @@ export const TraceDebugger: React.FC<TraceDebuggerProps> = ({
           </div>
           {pattern.startsWith('^') && (
             <button
-              onClick={() => onApplyFix(pattern.replace(/^\^/, '').replace(/\$$/, ''), flags)}
-              className="px-2 py-0.5 rounded bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-500/40 flex items-center gap-1 transition-colors"
+              onClick={() => {
+                soundFX.playSuccess();
+                onApplyFix(pattern.replace(/^\^/, '').replace(/\$$/, ''), flags);
+              }}
+              className="px-2 py-0.5 rounded bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-500/40 flex items-center gap-1 transition-all active:scale-95"
             >
               <Wrench className="w-3 h-3" />
               <span>Remove anchors (^, $)</span>
@@ -153,12 +168,12 @@ export const TraceDebugger: React.FC<TraceDebuggerProps> = ({
       <div className="flex-1 min-h-0 overflow-y-auto border border-border rounded bg-surface-subtle">
         <table className="w-full text-left text-xs">
           <thead>
-            <tr className="border-b border-border text-[10px] uppercase text-foreground-dim bg-surface">
-              <th className="py-1 px-2 w-12">Step</th>
-              <th className="py-1 px-2 w-16">Char</th>
-              <th className="py-1 px-2 w-24">Action</th>
-              <th className="py-1 px-2">Matched So Far</th>
-              <th className="py-1 px-2">Engine State / Explanation</th>
+            <tr className="border-b border-border text-[10px] uppercase text-foreground-dim bg-surface sticky top-0 z-10">
+              <th className="py-1.5 px-2.5 w-12">Step</th>
+              <th className="py-1.5 px-2 w-16">Char</th>
+              <th className="py-1.5 px-2 w-24">Action</th>
+              <th className="py-1.5 px-2">Matched So Far</th>
+              <th className="py-1.5 px-2">Engine State / Explanation</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border/40 font-mono text-[11px]">
@@ -171,15 +186,15 @@ export const TraceDebugger: React.FC<TraceDebuggerProps> = ({
                     setIsPlaying(false);
                     setCurrentStepIdx(idx);
                   }}
-                  className={`cursor-pointer transition-colors ${
+                  className={`cursor-pointer transition-all ${
                     isCurrent
-                      ? 'bg-amber-400/15 text-amber-300 font-semibold'
+                      ? 'bg-amber-400/15 text-amber-300 font-semibold shadow-inner border-l-2 border-l-amber-400'
                       : 'hover:bg-surface text-foreground-muted'
                   }`}
                 >
-                  <td className="py-1 px-2 text-foreground-dim">#{step.stepIndex}</td>
+                  <td className="py-1 px-2.5 text-foreground-dim">#{step.stepIndex}</td>
                   <td className="py-1 px-2">
-                    <span className="px-1 rounded bg-surface border border-border text-foreground">
+                    <span className="px-1.5 py-0.2 rounded bg-surface border border-border text-foreground font-bold">
                       {step.char === ' ' ? '⎵' : step.char || '∅'}
                     </span>
                   </td>

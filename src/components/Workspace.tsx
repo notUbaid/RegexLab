@@ -9,7 +9,7 @@ import { CheatsheetModal } from './CheatsheetModal';
 import { LibraryModal } from './LibraryModal';
 import { ChallengesModal } from './ChallengesModal';
 import { analyzeRegex } from '../engine/analyze';
-import { soundFX } from '../utils/soundEffects';
+import { soundFX, SoundProfile } from '../utils/soundEffects';
 
 const DEFAULT_PATTERN = 'v?(\\d+)\\.(\\d+)\\.(\\d+)(?:-([0-9A-Za-z.-]+))?';
 const DEFAULT_FLAGS = 'gm';
@@ -80,6 +80,9 @@ export const Workspace: React.FC = () => {
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
     return localStorage.getItem('regexlab_sound') !== 'false';
   });
+  const [soundProfile, setSoundProfile] = useState<SoundProfile>(() => {
+    return soundFX.getProfile();
+  });
 
   // Apply theme to document element
   useEffect(() => {
@@ -108,6 +111,7 @@ export const Workspace: React.FC = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
+        soundFX.playLatch();
         setCheatsheetOpen((prev) => !prev);
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         e.preventDefault();
@@ -131,23 +135,22 @@ export const Workspace: React.FC = () => {
   // Flag toggle handler
   const handleToggleFlag = useCallback((f: string) => {
     setFlags((prev) => (prev.includes(f) ? prev.replace(f, '') : prev + f));
-    if (soundEnabled) soundFX.playClick();
-  }, [soundEnabled]);
+  }, []);
 
   // Pattern change handler
   const handlePatternChange = useCallback((newPattern: string) => {
     setPattern(newPattern);
-    if (soundEnabled) soundFX.playClick();
-  }, [soundEnabled]);
+  }, []);
 
   // Token insertion from palette or cheatsheet
   const handleInsertToken = useCallback((tokenSnippet: string) => {
+    soundFX.playKeypress();
     setPattern((prev) => prev + tokenSnippet);
-    if (soundEnabled) soundFX.playSuccess();
-  }, [soundEnabled]);
+  }, []);
 
   // Share URL handler
   const handleShare = useCallback(() => {
+    soundFX.playCopy();
     const params = new URLSearchParams();
     params.set('p', encodeURIComponent(pattern));
     params.set('f', encodeURIComponent(flags));
@@ -157,24 +160,23 @@ export const Workspace: React.FC = () => {
 
     navigator.clipboard.writeText(shareUrl);
     setShareCopied(true);
-    if (soundEnabled) soundFX.playSuccess();
     setTimeout(() => setShareCopied(false), 2000);
-  }, [pattern, flags, testText, activeTab, soundEnabled]);
+  }, [pattern, flags, testText, activeTab]);
 
   // 1-Click fix applicator from trace debugger
   const handleApplyFix = useCallback((fixedPattern: string, fixedFlags: string) => {
+    soundFX.playSuccess();
     setPattern(fixedPattern);
     setFlags(fixedFlags);
-    if (soundEnabled) soundFX.playSuccess();
-  }, [soundEnabled]);
+  }, []);
 
   // Load from preset library
   const handleSelectPreset = useCallback((presetPattern: string, presetFlags: string, sampleText: string) => {
+    soundFX.playSuccess();
     setPattern(presetPattern);
     setFlags(presetFlags || 'g');
     if (sampleText) setTestText(sampleText);
-    if (soundEnabled) soundFX.playSuccess();
-  }, [soundEnabled]);
+  }, []);
 
   return (
     <div className="flex flex-col h-screen w-screen bg-background text-foreground overflow-hidden font-sans select-none">
@@ -191,7 +193,11 @@ export const Workspace: React.FC = () => {
         soundEnabled={soundEnabled}
         onToggleSound={() => {
           setSoundEnabled(!soundEnabled);
-          localStorage.setItem('regexlab_sound', String(!soundEnabled));
+        }}
+        soundProfile={soundProfile}
+        onSelectSoundProfile={(p) => {
+          soundFX.setProfile(p);
+          setSoundProfile(p);
         }}
         shareCopied={shareCopied}
       />
@@ -267,7 +273,7 @@ export const Workspace: React.FC = () => {
         onApplyFix={handleApplyFix}
       />
 
-      {/* Modals */}
+      {/* Modals with spring entrance */}
       <CheatsheetModal
         isOpen={cheatsheetOpen}
         onClose={() => setCheatsheetOpen(false)}

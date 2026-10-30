@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { X, Search, Check, Copy } from 'lucide-react';
 import { PATTERN_LIBRARY } from '../data/patternLibrary';
 import { PatternItem } from '../types/regex';
+import { soundFX } from '../utils/soundEffects';
 
 interface LibraryModalProps {
   isOpen: boolean;
@@ -54,12 +55,14 @@ export const LibraryModal: React.FC<LibraryModalProps> = ({
 
   const handleCopy = (e: React.MouseEvent, p: PatternItem) => {
     e.stopPropagation();
+    soundFX.playCopy();
     navigator.clipboard.writeText(p.regex);
     setCopiedId(p.id);
     setTimeout(() => setCopiedId(null), 1500);
   };
 
   const handleSelect = (p: PatternItem) => {
+    soundFX.playSuccess();
     const sampleText = p.testCases.map((tc) => tc.input).join('\n');
     onSelectPattern(p.regex, p.flags || '', sampleText);
     onClose();
@@ -69,11 +72,14 @@ export const LibraryModal: React.FC<LibraryModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
-      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-modal-backdrop"
+      onClick={() => {
+        soundFX.playLatch();
+        onClose();
+      }}
     >
       <div
-        className="w-full max-w-3xl max-h-[85vh] bg-surface border border-border rounded-lg flex flex-col shadow-2xl overflow-hidden select-none font-mono"
+        className="w-full max-w-3xl max-h-[85vh] bg-surface border border-border rounded-lg flex flex-col shadow-2xl overflow-hidden select-none font-mono animate-modal-pop"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -87,7 +93,10 @@ export const LibraryModal: React.FC<LibraryModalProps> = ({
             </kbd>
           </div>
           <button
-            onClick={onClose}
+            onClick={() => {
+              soundFX.playLatch();
+              onClose();
+            }}
             className="p-1 rounded text-foreground-dim hover:text-foreground hover:bg-surface-elevated transition-colors"
           >
             <X className="w-4 h-4" />
@@ -101,14 +110,20 @@ export const LibraryModal: React.FC<LibraryModalProps> = ({
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                soundFX.playKeypress();
+                setSearch(e.target.value);
+              }}
               placeholder="Search by name, tag (e.g. email, url, date, semver)..."
               autoFocus
               className="flex-1 bg-transparent text-xs text-foreground placeholder:text-foreground-dim focus:outline-none"
             />
             {search && (
               <button
-                onClick={() => setSearch('')}
+                onClick={() => {
+                  soundFX.playLatch();
+                  setSearch('');
+                }}
                 className="text-[10px] text-foreground-dim hover:text-foreground"
               >
                 Clear
@@ -120,7 +135,10 @@ export const LibraryModal: React.FC<LibraryModalProps> = ({
             {CATEGORIES.map((cat) => (
               <button
                 key={cat}
-                onClick={() => setActiveCategory(cat)}
+                onClick={() => {
+                  soundFX.playTab();
+                  setActiveCategory(cat);
+                }}
                 className={`px-2 py-0.5 rounded text-[11px] whitespace-nowrap transition-colors ${
                   activeCategory === cat
                     ? 'bg-foreground text-background font-semibold'
@@ -146,6 +164,7 @@ export const LibraryModal: React.FC<LibraryModalProps> = ({
                 <div
                   key={p.id}
                   onClick={() => handleSelect(p)}
+                  onMouseEnter={() => soundFX.playHoverPlink(1.1)}
                   className="p-3 rounded bg-surface-subtle border border-border hover:bg-surface-elevated hover:border-foreground/30 cursor-pointer transition-colors space-y-2 group"
                 >
                   <div className="flex items-start justify-between gap-3">

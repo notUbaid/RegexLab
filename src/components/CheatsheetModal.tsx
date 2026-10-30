@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Search } from 'lucide-react';
+import { soundFX } from '../utils/soundEffects';
 
 interface CheatsheetModalProps {
   isOpen: boolean;
@@ -103,11 +104,14 @@ export const CheatsheetModal: React.FC<CheatsheetModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
-      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-modal-backdrop"
+      onClick={() => {
+        soundFX.playLatch();
+        onClose();
+      }}
     >
       <div
-        className="w-full max-w-2xl max-h-[85vh] bg-surface border border-border rounded-lg flex flex-col shadow-2xl overflow-hidden select-none font-mono"
+        className="w-full max-w-2xl max-h-[85vh] bg-surface border border-border rounded-lg flex flex-col shadow-2xl overflow-hidden select-none font-mono animate-modal-pop"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -121,7 +125,10 @@ export const CheatsheetModal: React.FC<CheatsheetModalProps> = ({
             </kbd>
           </div>
           <button
-            onClick={onClose}
+            onClick={() => {
+              soundFX.playLatch();
+              onClose();
+            }}
             className="p-1 rounded text-foreground-dim hover:text-foreground hover:bg-surface-elevated transition-colors"
           >
             <X className="w-4 h-4" />
@@ -135,7 +142,10 @@ export const CheatsheetModal: React.FC<CheatsheetModalProps> = ({
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                soundFX.playKeypress();
+                setSearch(e.target.value);
+              }}
               placeholder="Search tokens, anchors, lookarounds..."
               autoFocus
               className="flex-1 bg-transparent text-xs text-foreground placeholder:text-foreground-dim focus:outline-none"
@@ -168,10 +178,11 @@ export const CheatsheetModal: React.FC<CheatsheetModalProps> = ({
                     <div
                       key={item.token}
                       onClick={() => {
+                        soundFX.playKeypress();
                         onInsertToken(item.token);
                         onClose();
                       }}
-                      className="p-2 rounded bg-surface-subtle border border-border hover:bg-surface-elevated hover:border-foreground/30 cursor-pointer transition-colors group flex items-start justify-between gap-2"
+                      className="p-2 rounded bg-surface-subtle border border-border hover:bg-surface-elevated hover:border-foreground/30 cursor-pointer transition-all active:scale-[0.98] group flex items-start justify-between gap-2"
                     >
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 mb-1">

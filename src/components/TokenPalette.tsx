@@ -1,5 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
+import { soundFX } from '../utils/soundEffects';
 
 interface TokenPaletteProps {
   isOpen: boolean;
@@ -81,12 +82,15 @@ export const TokenPalette: React.FC<TokenPaletteProps> = ({
   if (!isOpen) return null;
 
   return (
-    <aside className="w-64 border-r border-border bg-surface flex flex-col h-full shrink-0 select-none z-20">
+    <aside className="w-64 border-r border-border bg-surface flex flex-col h-full shrink-0 select-none z-20 animate-drawer-in shadow-lg">
       {/* Drawer Header */}
       <div className="h-9 px-3 border-b border-border bg-surface-subtle flex items-center justify-between text-xs">
         <span className="font-semibold text-foreground tracking-tight">Token Palette</span>
         <button
-          onClick={onClose}
+          onClick={() => {
+            soundFX.playLatch();
+            onClose();
+          }}
           className="p-1 rounded text-foreground-dim hover:text-foreground hover:bg-surface-elevated transition-colors"
           title="Close palette"
         >
@@ -105,8 +109,11 @@ export const TokenPalette: React.FC<TokenPaletteProps> = ({
               {section.items.map((item) => (
                 <button
                   key={item.token}
-                  onClick={() => onInsertToken(item.token)}
-                  className="w-full text-left p-1.5 rounded flex items-center justify-between hover:bg-surface-elevated border border-transparent hover:border-border transition-colors group"
+                  onClick={() => {
+                    soundFX.playKeypress();
+                    onInsertToken(item.token);
+                  }}
+                  className="w-full text-left p-1.5 rounded flex items-center justify-between hover:bg-surface-elevated border border-transparent hover:border-border transition-all active:scale-[0.98] group"
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <code className="px-1.5 py-0.5 rounded bg-surface-subtle text-foreground font-mono text-xs font-semibold group-hover:bg-foreground group-hover:text-background transition-colors">

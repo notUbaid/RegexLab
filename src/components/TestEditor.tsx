@@ -1,6 +1,7 @@
-import React, { useMemo, useRef, useEffect } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { Copy, Trash2, FileText, Check } from 'lucide-react';
 import { RegexAnalysisResult, RegexMatch } from '../engine/types';
+import { soundFX } from '../utils/soundEffects';
 
 interface TestEditorProps {
   testText: string;
@@ -19,7 +20,7 @@ const SAMPLE_TEXTS: { label: string; text: string }[] = [
     label: 'SemVer Releases',
     text: `v1.2.3
 v2.0.0-beta.1
-1.0.4-rc.2+20230501
+1.0.4-rc.2
 release-v0.9.0-alpha
 v3.14.159-preview.5
 invalid-version-here
@@ -61,7 +62,6 @@ export const TestEditor: React.FC<TestEditorProps> = ({
 
   const lineCount = lines.length;
   const minRows = Math.max(lineCount, 8);
-  const editorHeight = minRows * LINE_HEIGHT + PADDING_TOP * 2;
 
   // Sync scroll
   const handleScroll = () => {
@@ -72,16 +72,19 @@ export const TestEditor: React.FC<TestEditorProps> = ({
   };
 
   const handleCopy = () => {
+    soundFX.playCopy();
     navigator.clipboard.writeText(testText);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
 
   const handleClear = () => {
+    soundFX.playLatch();
     onTestTextChange('');
   };
 
   const handleLoadSample = (sample: string) => {
+    soundFX.playLatch();
     onTestTextChange(sample);
   };
 
@@ -173,7 +176,7 @@ export const TestEditor: React.FC<TestEditorProps> = ({
               <FileText className="w-3 h-3" />
               <span>Samples</span>
             </button>
-            <div className="absolute right-0 top-full mt-1 w-48 bg-surface-elevated border border-border rounded shadow-lg p-1 hidden group-hover:block z-30">
+            <div className="absolute right-0 top-full mt-1 w-48 bg-surface-elevated border border-border rounded shadow-xl p-1 hidden group-hover:block z-30 animate-modal-pop">
               {SAMPLE_TEXTS.map((sample) => (
                 <button
                   key={sample.label}
@@ -235,7 +238,10 @@ export const TestEditor: React.FC<TestEditorProps> = ({
             ref={textareaRef}
             wrap="off"
             value={testText}
-            onChange={(e) => onTestTextChange(e.target.value)}
+            onChange={(e) => {
+              soundFX.playKeypress();
+              onTestTextChange(e.target.value);
+            }}
             onScroll={handleScroll}
             placeholder="Type or paste text here to test your regular expression against..."
             spellCheck={false}

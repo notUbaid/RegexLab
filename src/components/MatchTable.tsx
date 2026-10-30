@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Copy, Check, GitCompare, Replace, ListFilter, ArrowRight } from 'lucide-react';
 import { RegexAnalysisResult, RegexMatch } from '../engine/types';
 import { analyzeRegex } from '../engine/analyze';
+import { soundFX } from '../utils/soundEffects';
 
 interface MatchTableProps {
   analysis: RegexAnalysisResult;
@@ -50,6 +51,7 @@ export const MatchTable: React.FC<MatchTableProps> = ({
   }, [comparePattern, compareFlags, testText]);
 
   const handleCopyReplaced = () => {
+    soundFX.playCopy();
     navigator.clipboard.writeText(replacedOutput);
     setCopiedReplace(true);
     setTimeout(() => setCopiedReplace(false), 1500);
@@ -68,14 +70,17 @@ export const MatchTable: React.FC<MatchTableProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-surface select-none">
-      {/* Tab Switcher Toolbar */}
+      {/* Tab Switcher Toolbar with tactile switch sound */}
       <div className="h-9 px-3 border-b border-border bg-surface-subtle flex items-center justify-between text-xs">
         <div className="flex items-center gap-1">
           <button
-            onClick={() => setActivePane('matches')}
-            className={`px-2.5 py-1 rounded transition-colors ${
+            onClick={() => {
+              soundFX.playTab();
+              setActivePane('matches');
+            }}
+            className={`px-2.5 py-1 rounded transition-all ${
               activePane === 'matches'
-                ? 'bg-surface-elevated text-foreground font-semibold'
+                ? 'bg-surface-elevated text-foreground font-semibold shadow-sm'
                 : 'text-foreground-muted hover:text-foreground'
             }`}
           >
@@ -83,10 +88,13 @@ export const MatchTable: React.FC<MatchTableProps> = ({
           </button>
 
           <button
-            onClick={() => setActivePane('replace')}
-            className={`px-2.5 py-1 rounded transition-colors ${
+            onClick={() => {
+              soundFX.playTab();
+              setActivePane('replace');
+            }}
+            className={`px-2.5 py-1 rounded transition-all ${
               activePane === 'replace'
-                ? 'bg-surface-elevated text-foreground font-semibold'
+                ? 'bg-surface-elevated text-foreground font-semibold shadow-sm'
                 : 'text-foreground-muted hover:text-foreground'
             }`}
           >
@@ -94,10 +102,13 @@ export const MatchTable: React.FC<MatchTableProps> = ({
           </button>
 
           <button
-            onClick={() => setActivePane('compare')}
-            className={`px-2.5 py-1 rounded transition-colors ${
+            onClick={() => {
+              soundFX.playTab();
+              setActivePane('compare');
+            }}
+            className={`px-2.5 py-1 rounded transition-all ${
               activePane === 'compare'
-                ? 'bg-surface-elevated text-foreground font-semibold'
+                ? 'bg-surface-elevated text-foreground font-semibold shadow-sm'
                 : 'text-foreground-muted hover:text-foreground'
             }`}
           >
@@ -116,12 +127,12 @@ export const MatchTable: React.FC<MatchTableProps> = ({
       {activePane === 'matches' && (
         <div className="flex-1 min-h-0 flex flex-col overflow-hidden text-xs">
           {!analysis.isValid ? (
-            <div className="flex-1 p-4 flex flex-col items-center justify-center text-center text-rose-400">
+            <div className="flex-1 p-4 flex flex-col items-center justify-center text-center text-rose-400 animate-modal-pop">
               <span className="font-semibold text-sm mb-1">Invalid Expression</span>
               <p className="font-mono text-xs opacity-80">{analysis.error}</p>
             </div>
           ) : analysis.matches.length === 0 ? (
-            <div className="flex-1 p-4 flex flex-col items-center justify-center text-center text-foreground-dim">
+            <div className="flex-1 p-4 flex flex-col items-center justify-center text-center text-foreground-dim animate-modal-pop">
               <span className="font-medium mb-1">No matches found</span>
               <p className="text-[11px] max-w-xs">
                 Check that your pattern matches the text or try toggling the <code className="text-foreground">i</code> (ignore case) or <code className="text-foreground">m</code> (multiline) flags.
@@ -136,11 +147,14 @@ export const MatchTable: React.FC<MatchTableProps> = ({
                   {analysis.matches.map((m, idx) => (
                     <button
                       key={idx}
-                      onClick={() => setSelectedMatchIdx(idx)}
-                      className={`px-2 py-0.5 rounded font-mono text-[11px] transition-colors ${
+                      onClick={() => {
+                        soundFX.playKeypress();
+                        setSelectedMatchIdx(idx);
+                      }}
+                      className={`px-2 py-0.5 rounded font-mono text-[11px] transition-all ${
                         (selectedMatchIdx || 0) === idx
-                          ? 'bg-foreground text-background font-semibold'
-                          : 'bg-surface-elevated text-foreground-muted hover:text-foreground'
+                          ? 'bg-foreground text-background font-semibold shadow-sm scale-105'
+                          : 'bg-surface-elevated text-foreground-muted hover:text-foreground hover:bg-surface'
                       }`}
                     >
                       #{idx + 1}
@@ -196,7 +210,10 @@ export const MatchTable: React.FC<MatchTableProps> = ({
                         return (
                           <tr
                             key={group.index}
-                            onMouseEnter={() => onHoverGroup(group.index)}
+                            onMouseEnter={() => {
+                              soundFX.playHoverPlink();
+                              onHoverGroup(group.index);
+                            }}
                             onMouseLeave={() => onHoverGroup(null)}
                             className={`cursor-pointer transition-colors ${
                               isHovered ? 'bg-surface-elevated' : 'hover:bg-surface-subtle'
@@ -230,7 +247,7 @@ export const MatchTable: React.FC<MatchTableProps> = ({
 
       {/* Pane 2: Replace Sandbox */}
       {activePane === 'replace' && (
-        <div className="flex-1 min-h-0 flex flex-col p-3 space-y-3 overflow-auto text-xs">
+        <div className="flex-1 min-h-0 flex flex-col p-3 space-y-3 overflow-auto text-xs animate-tab-enter">
           <div>
             <label className="block text-[11px] font-semibold text-foreground-muted mb-1">
               Substitution String
@@ -238,7 +255,10 @@ export const MatchTable: React.FC<MatchTableProps> = ({
             <input
               type="text"
               value={replacementText}
-              onChange={(e) => onReplacementTextChange(e.target.value)}
+              onChange={(e) => {
+                soundFX.playKeypress();
+                onReplacementTextChange(e.target.value);
+              }}
               placeholder="e.g. [$1] or Item: $&"
               className="w-full px-2.5 py-1.5 rounded bg-surface-subtle border border-border font-mono text-xs text-foreground placeholder:text-foreground-dim focus:outline-none focus:border-foreground/40"
             />
@@ -250,9 +270,12 @@ export const MatchTable: React.FC<MatchTableProps> = ({
             {quickPills.map((pill) => (
               <button
                 key={pill.val}
-                onClick={() => onReplacementTextChange(replacementText + pill.val)}
+                onClick={() => {
+                  soundFX.playKeypress();
+                  onReplacementTextChange(replacementText + pill.val);
+                }}
                 title={pill.title}
-                className="px-1.5 py-0.5 rounded bg-surface-elevated border border-border text-[11px] font-mono text-foreground-muted hover:text-foreground hover:bg-surface transition-colors"
+                className="px-1.5 py-0.5 rounded bg-surface-elevated border border-border text-[11px] font-mono text-foreground-muted hover:text-foreground hover:bg-surface transition-colors active:scale-95"
               >
                 {pill.label}
               </button>
@@ -282,7 +305,7 @@ export const MatchTable: React.FC<MatchTableProps> = ({
 
       {/* Pane 3: Compare Pattern A vs B */}
       {activePane === 'compare' && (
-        <div className="flex-1 min-h-0 flex flex-col p-3 space-y-3 overflow-auto text-xs">
+        <div className="flex-1 min-h-0 flex flex-col p-3 space-y-3 overflow-auto text-xs animate-tab-enter">
           <div>
             <label className="block text-[11px] font-semibold text-foreground-muted mb-1">
               Pattern B (Compare Target)
@@ -292,7 +315,10 @@ export const MatchTable: React.FC<MatchTableProps> = ({
               <input
                 type="text"
                 value={comparePattern}
-                onChange={(e) => onComparePatternChange(e.target.value)}
+                onChange={(e) => {
+                  soundFX.playKeypress();
+                  onComparePatternChange(e.target.value);
+                }}
                 placeholder="Alternative pattern to test"
                 className="flex-1 px-2.5 py-1.5 rounded bg-surface-subtle border border-border font-mono text-xs text-foreground placeholder:text-foreground-dim focus:outline-none focus:border-foreground/40"
               />
@@ -300,7 +326,10 @@ export const MatchTable: React.FC<MatchTableProps> = ({
               <input
                 type="text"
                 value={compareFlags}
-                onChange={(e) => onCompareFlagsChange(e.target.value)}
+                onChange={(e) => {
+                  soundFX.playKeypress();
+                  onCompareFlagsChange(e.target.value);
+                }}
                 placeholder="flags"
                 className="w-14 px-2 py-1.5 rounded bg-surface-subtle border border-border font-mono text-xs text-foreground focus:outline-none"
               />

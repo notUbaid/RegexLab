@@ -1,200 +1,557 @@
 /**
  * ============================================================================
- * RegexLab - Web Audio API Sound Synthesizer
+ * RegexLab - Advanced Procedural Mechanical & Haptic Synthesizer
  * ============================================================================
  * 
- * Welcome! To give RegexLab a tactile, luxury physical feedback feel (similar
- * to high-end mechanical keyboards or Linear/Raycast app interactions),
- * this module synthesizes audio directly in code!
- * 
- * ZERO AUDIO FILES DOWNLOADED:
- * Many web apps load large .mp3 or .wav files over the network, which causes
- * lag and consumes bandwidth. Instead, we use the browser's built-in
- * `AudioContext` to generate pure electronic sound waves (sine, triangle, sawtooth)
- * in real-time with microsecond precision!
- * 
- * AUDIO NODES USED:
- * 1. `OscillatorNode`: Generates the sound wave at a given pitch/frequency (Hz).
- * 2. `GainNode`: Controls the volume (gain) and creates smooth fade-outs (envelopes).
- * 3. `ctx.destination`: The user's speakers or headphones.
+ * Generates physical mechanical keyboard acoustics, switch actuations,
+ * magnetic latch clicks, and polyphonic chimes in real-time using the
+ * Web Audio API with zero external audio assets.
  */
 
-// Window type interface supporting legacy WebKit audio contexts
+export type SoundProfile = 'thock' | 'clicky' | 'tactile' | 'buckling' | 'cyber';
+
 interface WindowWithWebkitAudio extends Window {
   webkitAudioContext?: typeof AudioContext;
 }
 
-/**
- * Synthesizer class handling real-time procedural audio generation.
- */
 class SoundSynthesizer {
-  /** The browser's master Web Audio context */
   private audioContext: AudioContext | null = null;
+  private isAudioEnabled: boolean = true;
+  private currentProfile: SoundProfile = 'thock';
+  private noiseBuffer: AudioBuffer | null = null;
 
-  /** Global toggle: sound is disabled by default to respect user privacy */
-  private isAudioEnabled: boolean = false;
-
-  /**
-   * Enables or disables sound effects.
-   * 
-   * @param enabled - True to play sounds, false to mute
-   */
-  public setEnabled(enabled: boolean): void {
-    this.isAudioEnabled = enabled;
-
-    // Lazily instantiate the AudioContext upon user gesture
-    if (enabled && !this.audioContext) {
-      this.initializeAudioContext();
+  constructor() {
+    try {
+      const savedEnabled = localStorage.getItem('regexlab_sound');
+      if (savedEnabled !== null) {
+        this.isAudioEnabled = savedEnabled !== 'false';
+      }
+      const savedProfile = localStorage.getItem('regexlab_sound_profile') as SoundProfile;
+      if (savedProfile) {
+        this.currentProfile = savedProfile;
+      }
+    } catch {
+      // ignore
     }
   }
 
-  /**
-   * Returns whether sound effects are currently turned on.
-   */
+  public setEnabled(enabled: boolean): void {
+    this.isAudioEnabled = enabled;
+    try {
+      localStorage.setItem('regexlab_sound', String(enabled));
+    } catch {
+      // ignore
+    }
+    if (enabled) {
+      this.initContext();
+    }
+  }
+
   public isEnabled(): boolean {
     return this.isAudioEnabled;
   }
 
-  /**
-   * Initializes and resumes the AudioContext safely.
-   */
-  private initializeAudioContext(): void {
+  public setProfile(profile: SoundProfile): void {
+    this.currentProfile = profile;
+    try {
+      localStorage.setItem('regexlab_sound_profile', profile);
+    } catch {
+      // ignore
+    }
+    // Play a preview sound of the selected profile
+    this.playKeypress();
+  }
+
+  public getProfile(): SoundProfile {
+    return this.currentProfile;
+  }
+
+  private initContext(): AudioContext | null {
     if (!this.audioContext && typeof window !== 'undefined') {
       try {
-        const windowWithAudio = window as WindowWithWebkitAudio;
-        const AudioContextClass = window.AudioContext || windowWithAudio.webkitAudioContext;
-
-        if (AudioContextClass) {
-          this.audioContext = new AudioContextClass();
+        const win = window as WindowWithWebkitAudio;
+        const CtxClass = window.AudioContext || win.webkitAudioContext;
+        if (CtxClass) {
+          this.audioContext = new CtxClass();
+          this.generateNoiseBuffer();
         }
       } catch {
         this.audioContext = null;
       }
     }
 
-    // Browsers suspend audio contexts until the user interacts with the page
     if (this.audioContext && this.audioContext.state === 'suspended') {
-      this.audioContext.resume().catch(() => {
-        // Silently catch autoplay restriction errors
-      });
+      this.audioContext.resume().catch(() => {});
     }
+
+    return this.audioContext;
   }
 
-  /**
-   * Plays a subtle mechanical keystroke click.
-   * Useful when typing regex or clicking quick-insert buttons.
-   * 
-   * @param pitchFrequencyHz - Pitch of the click in Hertz (default: 600Hz)
-   */
-  public playClick(pitchFrequencyHz: number = 600): void {
-    if (!this.isAudioEnabled) return;
-    this.initializeAudioContext();
+  /** Precomputes 1 second of calibrated white/pink noise for switch ping acoustics */
+  private generateNoiseBuffer(): void {
     if (!this.audioContext) return;
+    const sampleRate = this.audioContext.sampleRate;
+    const bufferSize = sampleRate; // 1 second
+    this.noiseBuffer = this.audioContext.createBuffer(1, bufferSize, sampleRate);
+    const output = this.noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      output[i] = Math.random() * 2 - 1;
+    }
+  }
 
-    try {
-      const now = this.audioContext.currentTime;
-      const oscillator = this.audioContext.createOscillator();
-      const volumeControl = this.audioContext.createGain();
+  private triggerHaptic(durationMs = 12): void {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(durationMs);
+      } catch {
+        // ignore
+      }
+    }
+  }
 
-      // Sine wave gives a soft, modern woodblock/mechanical click
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(pitchFrequencyHz, now);
-      // Rapid pitch drop simulates a physical switch contact
-      oscillator.frequency.exponentialRampToValueAtTime(150, now + 0.04);
+  // ==========================================================================
+  // MECHANICAL SWITCH ACOUSTICS
+  // ==========================================================================
 
-      // Volume envelope: quick attack, fast exponential decay
-      volumeControl.gain.setValueAtTime(0.04, now);
-      volumeControl.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+  /**
+   * Main tactile keypress dispatcher based on active sound profile.
+   */
+  public playKeypress(): void {
+    if (!this.isAudioEnabled) return;
+    const ctx = this.initContext();
+    if (!ctx) return;
 
-      // Connect: Oscillator -> Volume -> Speakers
-      oscillator.connect(volumeControl);
-      volumeControl.connect(this.audioContext.destination);
+    this.triggerHaptic(8);
 
-      oscillator.start(now);
-      oscillator.stop(now + 0.04);
-    } catch {
-      // Audio playback errors are non-critical and fail gracefully
+    switch (this.currentProfile) {
+      case 'thock':
+        this.synthesizeThock(ctx);
+        break;
+      case 'clicky':
+        this.synthesizeClicky(ctx);
+        break;
+      case 'tactile':
+        this.synthesizeTactile(ctx);
+        break;
+      case 'buckling':
+        this.synthesizeBuckling(ctx);
+        break;
+      case 'cyber':
+        this.synthesizeCyber(ctx);
+        break;
     }
   }
 
   /**
-   * Plays a higher-pitched tactile tick when the engine visualizer steps forward.
+   * Lubed Linear / Gateron Ink Black "THOCK"
+   * Combines high-pass stem snap with low-frequency resonant bottom-out thud.
+   */
+  private synthesizeThock(ctx: AudioContext): void {
+    const now = ctx.currentTime;
+
+    // 1. Bottom-out low-frequency thump (140Hz -> 50Hz)
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'triangle';
+    // Slight randomized pitch for realistic variation
+    const pitch = 135 + Math.random() * 15;
+    osc.frequency.setValueAtTime(pitch, now);
+    osc.frequency.exponentialRampToValueAtTime(45, now + 0.045);
+
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.045);
+
+    // 2. High-frequency switch housing click (noise burst)
+    if (this.noiseBuffer) {
+      const noise = ctx.createBufferSource();
+      noise.buffer = this.noiseBuffer;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(1400 + Math.random() * 200, now);
+      filter.Q.setValueAtTime(4, now);
+
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.04, now);
+      noiseGain.gain.exponentialRampToValueAtTime(0.0005, now + 0.018);
+
+      noise.connect(filter);
+      filter.connect(noiseGain);
+      noiseGain.connect(ctx.destination);
+
+      noise.start(now);
+      noise.stop(now + 0.018);
+    }
+  }
+
+  /**
+   * Cherry MX Blue / Kailh Box White "CLICKY"
+   * Sharp tactile click-leaf snap followed by bottom-out impact.
+   */
+  private synthesizeClicky(ctx: AudioContext): void {
+    const now = ctx.currentTime;
+
+    // Click leaf metallic snap
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    const baseFreq = 2200 + Math.random() * 200;
+    osc.frequency.setValueAtTime(baseFreq, now);
+    osc.frequency.exponentialRampToValueAtTime(800, now + 0.015);
+
+    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.exponentialRampToValueAtTime(0.0005, now + 0.015);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.015);
+
+    // Secondary bottom-out click
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(320, now + 0.008);
+    osc2.frequency.exponentialRampToValueAtTime(120, now + 0.035);
+
+    gain2.gain.setValueAtTime(0.05, now + 0.008);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+
+    osc2.start(now + 0.008);
+    osc2.stop(now + 0.035);
+  }
+
+  /**
+   * Holy Panda "TACTILE"
+   * Distinct dual-stage bump followed by round bottom-out pop.
+   */
+  private synthesizeTactile(ctx: AudioContext): void {
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440 + Math.random() * 30, now);
+    osc.frequency.exponentialRampToValueAtTime(160, now + 0.03);
+
+    gain.gain.setValueAtTime(0.07, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.03);
+  }
+
+  /**
+   * IBM Model M "BUCKLING SPRING"
+   * Metallic high coil ping with harmonic resonance.
+   */
+  private synthesizeBuckling(ctx: AudioContext): void {
+    const now = ctx.currentTime;
+
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc1.type = 'sawtooth';
+    osc2.type = 'sine';
+
+    osc1.frequency.setValueAtTime(1650, now);
+    osc2.frequency.setValueAtTime(3300, now);
+
+    gain.gain.setValueAtTime(0.04, now);
+    gain.gain.exponentialRampToValueAtTime(0.0005, now + 0.06);
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 0.06);
+    osc2.stop(now + 0.06);
+  }
+
+  /**
+   * Retro Sci-Fi / Cyber Terminal
+   * Pure FM pulse with instant drop.
+   */
+  private synthesizeCyber(ctx: AudioContext): void {
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(720, now);
+    osc.frequency.exponentialRampToValueAtTime(360, now + 0.02);
+
+    gain.gain.setValueAtTime(0.03, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.02);
+  }
+
+  // ==========================================================================
+  // UI INTERACTION SOUNDS (LATCHES, SLIDERS, TABS, ACTIONS)
+  // ==========================================================================
+
+  /**
+   * Heavy mechanical toggle latch (for flag pills and drawer toggles)
+   */
+  public playSwitch(state: boolean = true): void {
+    if (!this.isAudioEnabled) return;
+    const ctx = this.initContext();
+    if (!ctx) return;
+
+    this.triggerHaptic(10);
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    const startFreq = state ? 520 : 680;
+    const endFreq = state ? 880 : 380;
+
+    osc.frequency.setValueAtTime(startFreq, now);
+    osc.frequency.exponentialRampToValueAtTime(endFreq, now + 0.025);
+
+    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.025);
+  }
+
+  /**
+   * Magnetic latch click (drawer open/close, inspector expand/minimize)
+   */
+  public playLatch(): void {
+    if (!this.isAudioEnabled) return;
+    const ctx = this.initContext();
+    if (!ctx) return;
+
+    this.triggerHaptic(14);
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(380, now);
+    osc.frequency.exponentialRampToValueAtTime(110, now + 0.035);
+
+    gain.gain.setValueAtTime(0.09, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.035);
+  }
+
+  /**
+   * Smooth pneumatic slide tick (tab switching across inspector or match tables)
+   */
+  public playTab(): void {
+    if (!this.isAudioEnabled) return;
+    const ctx = this.initContext();
+    if (!ctx) return;
+
+    this.triggerHaptic(6);
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(620, now);
+    osc.frequency.exponentialRampToValueAtTime(420, now + 0.02);
+
+    gain.gain.setValueAtTime(0.04, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.02);
+  }
+
+  /**
+   * Metallic double-click for 1-click Copy actions and Share URL
+   */
+  public playCopy(): void {
+    if (!this.isAudioEnabled) return;
+    const ctx = this.initContext();
+    if (!ctx) return;
+
+    this.triggerHaptic(12);
+    const now = ctx.currentTime;
+
+    // First click
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(840, now);
+    osc1.frequency.exponentialRampToValueAtTime(1200, now + 0.015);
+    gain1.gain.setValueAtTime(0.05, now);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.015);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.015);
+
+    // Second click (20ms later)
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(1200, now + 0.025);
+    osc2.frequency.exponentialRampToValueAtTime(1600, now + 0.045);
+    gain2.gain.setValueAtTime(0.06, now + 0.025);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now + 0.025);
+    osc2.stop(now + 0.045);
+  }
+
+  /**
+   * Precise stepper motor tick for stepping through NFA debugger
    */
   public playStepTick(): void {
-    this.playClick(850);
+    if (!this.isAudioEnabled) return;
+    const ctx = this.initContext();
+    if (!ctx) return;
+
+    this.triggerHaptic(8);
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(950, now);
+    osc.frequency.exponentialRampToValueAtTime(300, now + 0.012);
+
+    gain.gain.setValueAtTime(0.05, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.012);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.012);
   }
 
   /**
-   * Plays a harmonic 4-tone chord arpeggio (C5 - E5 - G5 - C6) when a pattern matches
-   * or a learning challenge is successfully solved.
+   * Polyphonic pentatonic triumph chord (C5 - E5 - G5 - B5 - D6) with warm envelope
    */
   public playSuccess(): void {
     if (!this.isAudioEnabled) return;
-    this.initializeAudioContext();
-    if (!this.audioContext) return;
+    const ctx = this.initContext();
+    if (!ctx) return;
 
-    try {
-      const startTime = this.audioContext.currentTime;
-      // Frequencies corresponding to musical notes C5, E5, G5, and C6
-      const musicalChimeNotes = [523.25, 659.25, 783.99, 1046.5];
+    this.triggerHaptic(20);
+    const now = ctx.currentTime;
+    // Frequencies: C5, E5, G5, B5, D6
+    const chordNotes = [523.25, 659.25, 783.99, 987.77, 1174.66];
 
-      musicalChimeNotes.forEach((frequencyHz, noteIndex) => {
-        const noteStartTime = startTime + noteIndex * 0.08;
-        const oscillator = this.audioContext!.createOscillator();
-        const volumeControl = this.audioContext!.createGain();
+    chordNotes.forEach((freq, idx) => {
+      const startTime = now + idx * 0.055;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
 
-        // Triangle wave provides a warm, bell-like timbre
-        oscillator.type = 'triangle';
-        oscillator.frequency.setValueAtTime(frequencyHz, noteStartTime);
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, startTime);
 
-        // Volume envelope: smooth fade-in, gentle bell decay
-        volumeControl.gain.setValueAtTime(0, noteStartTime);
-        volumeControl.gain.linearRampToValueAtTime(0.06, noteStartTime + 0.02);
-        volumeControl.gain.exponentialRampToValueAtTime(0.0001, noteStartTime + 0.4);
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.05, startTime + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.45);
 
-        oscillator.connect(volumeControl);
-        volumeControl.connect(this.audioContext!.destination);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
 
-        oscillator.start(noteStartTime);
-        oscillator.stop(noteStartTime + 0.4);
-      });
-    } catch {
-      // Fail gracefully
-    }
+      osc.start(startTime);
+      osc.stop(startTime + 0.45);
+    });
   }
 
   /**
-   * Plays a low-frequency alert hum when catastrophic backtracking or ReDoS risk is detected.
+   * Low resonant hollow wooden knock for invalid regex or backtrack alerts
    */
   public playWarning(): void {
     if (!this.isAudioEnabled) return;
-    this.initializeAudioContext();
-    if (!this.audioContext) return;
+    const ctx = this.initContext();
+    if (!ctx) return;
 
-    try {
-      const now = this.audioContext.currentTime;
-      const oscillator = this.audioContext.createOscillator();
-      const volumeControl = this.audioContext.createGain();
+    this.triggerHaptic(18);
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
 
-      // Sawtooth wave provides a rich, buzzy warning timbre
-      oscillator.type = 'sawtooth';
-      oscillator.frequency.setValueAtTime(160, now);
-      oscillator.frequency.linearRampToValueAtTime(110, now + 0.15);
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(160, now);
+    osc.frequency.linearRampToValueAtTime(90, now + 0.12);
 
-      // Volume envelope
-      volumeControl.gain.setValueAtTime(0.05, now);
-      volumeControl.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    gain.gain.setValueAtTime(0.05, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
 
-      oscillator.connect(volumeControl);
-      volumeControl.connect(this.audioContext.destination);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
 
-      oscillator.start(now);
-      oscillator.stop(now + 0.2);
-    } catch {
-      // Fail gracefully
-    }
+    osc.start(now);
+    osc.stop(now + 0.14);
+  }
+
+  /**
+   * Ultra-light glass plink for hovering over capture groups or token nodes
+   */
+  public playHoverPlink(pitchMult: number = 1.0): void {
+    if (!this.isAudioEnabled) return;
+    const ctx = this.initContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1400 * pitchMult, now);
+    osc.frequency.exponentialRampToValueAtTime(1100 * pitchMult, now + 0.012);
+
+    gain.gain.setValueAtTime(0.015, now);
+    gain.gain.exponentialRampToValueAtTime(0.0005, now + 0.012);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.012);
+  }
+
+  // Alias for backward compatibility
+  public playClick(): void {
+    this.playKeypress();
   }
 }
 
-/** Export a singleton instance for use across all components */
 export const soundFX = new SoundSynthesizer();

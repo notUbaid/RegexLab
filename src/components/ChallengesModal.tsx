@@ -3,6 +3,7 @@ import { X, Trophy, Check, Lightbulb, Play, ArrowRight, RotateCcw } from 'lucide
 import confetti from 'canvas-confetti';
 import { REGEX_CHALLENGES } from '../data/challenges';
 import { Challenge } from '../types/regex';
+import { soundFX } from '../utils/soundEffects';
 
 interface ChallengesModalProps {
   isOpen: boolean;
@@ -93,6 +94,7 @@ export const ChallengesModal: React.FC<ChallengesModalProps> = ({
   // Handle completion trigger (ONLY when modal is open and solved)
   useEffect(() => {
     if (isOpen && testResults.allPassed && !completedIds.has(activeChallenge.id)) {
+      soundFX.playSuccess();
       confetti({
         particleCount: 60,
         spread: 60,
@@ -109,6 +111,7 @@ export const ChallengesModal: React.FC<ChallengesModalProps> = ({
   }, [isOpen, testResults.allPassed, activeChallenge.id, completedIds]);
 
   const handleLoadWorkspace = () => {
+    soundFX.playSuccess();
     const combinedTest = [
       ...activeChallenge.mustMatch,
       ...activeChallenge.mustNotMatch,
@@ -121,11 +124,14 @@ export const ChallengesModal: React.FC<ChallengesModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
-      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-modal-backdrop"
+      onClick={() => {
+        soundFX.playLatch();
+        onClose();
+      }}
     >
       <div
-        className="w-full max-w-4xl max-h-[90vh] bg-surface border border-border rounded-lg flex flex-col shadow-2xl overflow-hidden select-none font-mono"
+        className="w-full max-w-4xl max-h-[90vh] bg-surface border border-border rounded-lg flex flex-col shadow-2xl overflow-hidden select-none font-mono animate-modal-pop"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -137,7 +143,10 @@ export const ChallengesModal: React.FC<ChallengesModalProps> = ({
             </span>
           </div>
           <button
-            onClick={onClose}
+            onClick={() => {
+              soundFX.playLatch();
+              onClose();
+            }}
             className="p-1 rounded text-foreground-dim hover:text-foreground hover:bg-surface-elevated transition-colors"
           >
             <X className="w-4 h-4" />
@@ -149,7 +158,10 @@ export const ChallengesModal: React.FC<ChallengesModalProps> = ({
           {LEVELS.map((lvl) => (
             <button
               key={lvl}
-              onClick={() => setSelectedLevel(lvl)}
+              onClick={() => {
+                soundFX.playTab();
+                setSelectedLevel(lvl);
+              }}
               className={`px-2 py-0.5 rounded text-[11px] whitespace-nowrap transition-colors ${
                 selectedLevel === lvl
                   ? 'bg-foreground text-background font-semibold'
@@ -172,7 +184,11 @@ export const ChallengesModal: React.FC<ChallengesModalProps> = ({
               return (
                 <button
                   key={c.id}
-                  onClick={() => setActiveChallengeId(c.id)}
+                  onClick={() => {
+                    soundFX.playLatch();
+                    setActiveChallengeId(c.id);
+                  }}
+                  onMouseEnter={() => soundFX.playHoverPlink(1.05)}
                   className={`w-full text-left p-2 rounded border transition-colors flex items-center justify-between ${
                     isSelected
                       ? 'bg-surface-elevated border-border text-foreground font-semibold'
@@ -209,7 +225,10 @@ export const ChallengesModal: React.FC<ChallengesModalProps> = ({
             {/* Hint Accordion */}
             <div>
               <button
-                onClick={() => setShowHint(!showHint)}
+                onClick={() => {
+                  soundFX.playSwitch(!showHint);
+                  setShowHint(!showHint);
+                }}
                 className="flex items-center gap-1.5 text-[11px] text-amber-400/90 hover:text-amber-300 transition-colors"
               >
                 <Lightbulb className="w-3 h-3" />
@@ -232,13 +251,19 @@ export const ChallengesModal: React.FC<ChallengesModalProps> = ({
                 <input
                   type="text"
                   value={userPattern}
-                  onChange={(e) => setUserPattern(e.target.value)}
+                  onChange={(e) => {
+                    soundFX.playKeypress();
+                    setUserPattern(e.target.value);
+                  }}
                   placeholder="Type regular expression..."
                   className="flex-1 bg-transparent text-xs text-foreground font-mono focus:outline-none"
                 />
                 <span className="text-foreground-dim text-sm select-none">/</span>
                 <button
-                  onClick={() => setUserPattern(activeChallenge.starterPattern)}
+                  onClick={() => {
+                    soundFX.playLatch();
+                    setUserPattern(activeChallenge.starterPattern);
+                  }}
                   className="p-1 text-foreground-dim hover:text-foreground"
                   title="Reset to starter pattern"
                 >
