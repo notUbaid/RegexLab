@@ -169,7 +169,7 @@ const INITIAL_DEFAULT_TEST_TEXT = `Welcome to RegexLab!
 Test your regex patterns in real time:
 
 Primary: developer@regexlab.dev
-Support: hello+feedback@skynet.ai
+Support: support@regexlab.dev
 Personal: john.doe_99@gmail.com
 Invalid sample: missing-at-sign.com
 Another invalid: @domain-only.org

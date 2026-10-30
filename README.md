@@ -46,7 +46,7 @@ The application includes 10 dedicated interactive tools, built in a warm studio 
 
 | View | Description | Screenshot |
 | :--- | :--- | :--- |
-| **01. Landing Hero** | Three.js 3D WebGL amber particle universe with an interactive live sandbox | [`screenshots/01-landing.png`](screenshots/01-landing.png) |
+| **01. Overview** | Live interactive specimens with highlighter swipe and sample patterns | [`screenshots/01-landing.png`](screenshots/01-landing.png) |
 | **02. Playground** | Real-time regex testing with live match highlighting and replacement preview | [`screenshots/02-playground.png`](screenshots/02-playground.png) |
 | **03. Step-by-Step** | Step-by-step matcher showing how regex tests letters one by one with a visual path | [`screenshots/03-visualizer.png`](screenshots/03-visualizer.png) |
 | **04. No-Code Builder** | Click-to-build block builder with live regex compilation and plain-English preview | [`screenshots/04-builder.png`](screenshots/04-builder.png) |
@@ -81,9 +81,6 @@ npm run dev
 # 4. Preview the production build
 npm run build && npm run preview
 ```
-
-### Video Demo Walkthrough
-Looking to record a product demo or showcase? See the step-by-step [Video Demo Guide](docs/VIDEO_DEMO_GUIDE.md) for an exact 2-minute scene-by-scene script and voiceover walkthrough.
 
 Open your browser and navigate to `http://localhost:5173`.
 
