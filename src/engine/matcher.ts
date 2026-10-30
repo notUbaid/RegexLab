@@ -1,45 +1,57 @@
 import { CaptureGroup, RegexMatch, RegexToken, TraceStep } from './types';
 
+// Run the regex pattern against the test string and collect all matches,
+// along with any capture groups and the time taken in milliseconds.
 export function executeMatches(pattern: string, flags: string, testText: string): { matches: RegexMatch[]; timeMs: number } {
+  // If either the pattern or test string is empty, there is nothing to match
   if (!pattern || !testText) {
     return { matches: [], timeMs: 0 };
   }
 
-  const t0 = performance.now();
+  const startTime = performance.now();
   const matches: RegexMatch[] = [];
 
   try {
-    // Ensure 'g' flag for all matches unless specifically testing non-global
+    // We add the 'g' (global) flag by default so we can find all matches across the text
     const effectiveFlags = flags.includes('g') ? flags : `${flags}g`;
-    const rx = new RegExp(pattern, effectiveFlags);
+    const regex = new RegExp(pattern, effectiveFlags);
 
-    let match: RegExpExecArray | null;
-    let iterations = 0;
-    const maxIterations = 2000;
+    let matchResult: RegExpExecArray | null;
+    let iterationCount = 0;
+    const safetyLimit = 2000; // Safeguard against infinite loops on zero-width patterns
 
-    while ((match = rx.exec(testText)) !== null && iterations < maxIterations) {
-      iterations++;
-      const fullMatch = match[0];
-      const start = match.index;
-      const end = start + fullMatch.length;
+    while ((matchResult = regex.exec(testText)) !== null && iterationCount < safetyLimit) {
+      iterationCount++;
+      const fullMatchText = matchResult[0];
+      const matchStart = matchResult.index;
+      const matchEnd = matchStart + fullMatchText.length;
 
-      const groups: CaptureGroup[] = [];
+      const captureGroups: CaptureGroup[] = [];
 
-      // Extract capture groups
-      if (match.length > 1) {
-        let searchCursor = start;
-        for (let g = 1; g < match.length; g++) {
-          const groupText = match[g];
+      // If the regex has capture groups (parentheses), extract them one by one
+      if (matchResult.length > 1) {
+        let cursor = matchStart;
+
+        for (let groupIndex = 1; groupIndex < matchResult.length; groupIndex++) {
+          const groupText = matchResult[groupIndex];
+
           if (groupText !== undefined) {
-            const gStart = testText.indexOf(groupText, searchCursor);
-            const gEnd = gStart !== -1 ? gStart + groupText.length : end;
-            if (gStart !== -1) searchCursor = gStart;
+            // Find where this group text appears within the match boundaries
+            const groupStartPos = testText.indexOf(groupText, cursor);
+            let actualStart = matchStart;
+            let actualEnd = matchEnd;
 
-            groups.push({
-              index: g,
+            if (groupStartPos !== -1) {
+              actualStart = groupStartPos;
+              actualEnd = groupStartPos + groupText.length;
+              cursor = groupStartPos;
+            }
+
+            captureGroups.push({
+              index: groupIndex,
               text: groupText,
-              start: gStart !== -1 ? gStart : start,
-              end: gEnd,
+              start: actualStart,
+              end: actualEnd,
             });
           }
         }
@@ -47,24 +59,26 @@ export function executeMatches(pattern: string, flags: string, testText: string)
 
       matches.push({
         index: matches.length + 1,
-        start,
-        end,
-        text: fullMatch,
-        groups,
+        start: matchStart,
+        end: matchEnd,
+        text: fullMatchText,
+        groups: captureGroups,
       });
 
-      // Advance cursor for zero-width assertions (^, $, \b, lookaheads)
-      if (fullMatch.length === 0) {
-        rx.lastIndex = match.index + 1;
-        if (rx.lastIndex > testText.length) break;
+      // Handle zero-length matches (like ^, $, or empty lookarounds) so the regex engine advances
+      if (fullMatchText.length === 0) {
+        regex.lastIndex = matchResult.index + 1;
+        if (regex.lastIndex > testText.length) {
+          break;
+        }
       }
     }
   } catch {
-    // Invalid regex or execution error
+    // If the regex has a syntax error or fails to run, we simply return what we have
   }
 
-  const timeMs = Math.round((performance.now() - t0) * 100) / 100;
-  return { matches, timeMs };
+  const totalTimeMs = Math.round((performance.now() - startTime) * 100) / 100;
+  return { matches, timeMs: totalTimeMs };
 }
 
 export function simulateTrace(tokens: RegexToken[], testText: string): TraceStep[] {

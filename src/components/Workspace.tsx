@@ -23,22 +23,27 @@ v4.0.0
 2.1.0-rc1`;
 
 export const Workspace: React.FC = () => {
-  // 1. Initial state parsing from URL if available
+  // Read initial values from the URL query params so shared links load immediately.
+  // If no params are in the URL, we fall back to our friendly defaults.
   const getInitialState = () => {
     try {
-      const search = window.location.search || (window.location.hash.startsWith('#?') ? window.location.hash.slice(1) : '');
-      const params = new URLSearchParams(search);
-      const p = params.get('p');
-      const f = params.get('f');
-      const t = params.get('t');
-      const tab = params.get('tab') as InspectorTab;
+      let queryString = window.location.search;
+      if (!queryString && window.location.hash.startsWith('#?')) {
+        queryString = window.location.hash.slice(1);
+      }
 
-      return {
-        pattern: p !== null ? decodeURIComponent(p) : DEFAULT_PATTERN,
-        flags: f !== null ? decodeURIComponent(f) : DEFAULT_FLAGS,
-        testText: t !== null ? decodeURIComponent(t) : DEFAULT_TEST_TEXT,
-        activeTab: tab || 'visualizer',
-      };
+      const params = new URLSearchParams(queryString);
+      const patternParam = params.get('p');
+      const flagsParam = params.get('f');
+      const textParam = params.get('t');
+      const tabParam = params.get('tab') as InspectorTab | null;
+
+      const pattern = patternParam !== null ? decodeURIComponent(patternParam) : DEFAULT_PATTERN;
+      const flags = flagsParam !== null ? decodeURIComponent(flagsParam) : DEFAULT_FLAGS;
+      const testText = textParam !== null ? decodeURIComponent(textParam) : DEFAULT_TEST_TEXT;
+      const activeTab = tabParam || 'visualizer';
+
+      return { pattern, flags, testText, activeTab };
     } catch {
       return {
         pattern: DEFAULT_PATTERN,

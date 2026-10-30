@@ -88,68 +88,85 @@ export const TestEditor: React.FC<TestEditorProps> = ({
     onTestTextChange(sample);
   };
 
-  // Render layered highlighted spans
+  // Here we slice up the test text so we can highlight matches and capture groups with <mark> tags.
+  // The CSS renders the background colors right underneath the transparent textarea text.
   const highlightedContent = useMemo(() => {
+    // If there are no matches or regex is invalid, just display the raw text
     if (!analysis.isValid || analysis.matches.length === 0 || !testText) {
       return testText;
     }
 
     const nodes: React.ReactNode[] = [];
-    let lastIndex = 0;
+    let textCursor = 0;
 
-    analysis.matches.forEach((m: RegexMatch, matchIdx: number) => {
-      if (m.end <= m.start) return;
-
-      // Text before match
-      if (m.start > lastIndex) {
-        nodes.push(testText.slice(lastIndex, m.start));
+    for (let matchIdx = 0; matchIdx < analysis.matches.length; matchIdx++) {
+      const match = analysis.matches[matchIdx];
+      if (match.end <= match.start) {
+        continue;
       }
 
-      // Check if any capture group is present inside this match
-      const groupNodes: React.ReactNode[] = [];
-      let groupLast = m.start;
+      // 1. Text before this match (unmatched text)
+      if (match.start > textCursor) {
+        const unmatchedBefore = testText.slice(textCursor, match.start);
+        nodes.push(unmatchedBefore);
+      }
 
-      const validGroups = m.groups
-        .filter((g) => g.end > g.start)
+      // 2. Build the contents of this match, including any inner capture groups
+      const matchInnerNodes: React.ReactNode[] = [];
+      let groupCursor = match.start;
+
+      // Filter and sort valid capture groups inside this match
+      const groupsInside = match.groups
+        .filter((group) => group.end > group.start)
         .sort((a, b) => a.start - b.start);
 
-      validGroups.forEach((g, gIdx) => {
-        if (g.start < groupLast) return;
-
-        // Text before this group inside match
-        if (g.start > groupLast) {
-          groupNodes.push(testText.slice(groupLast, g.start));
+      for (let gIdx = 0; gIdx < groupsInside.length; gIdx++) {
+        const group = groupsInside[gIdx];
+        if (group.start < groupCursor) {
+          // Skip nested or overlapping group that was already covered
+          continue;
         }
 
-        const isHot = hoveredGroupIndex === g.index;
-        groupNodes.push(
+        // Text inside match but before this group
+        if (group.start > groupCursor) {
+          matchInnerNodes.push(testText.slice(groupCursor, group.start));
+        }
+
+        // The capture group tag itself
+        const isHovered = hoveredGroupIndex === group.index;
+        const colorClass = `g${group.index % 8}`;
+        const activeClass = isHovered ? 'rx-hot' : '';
+
+        matchInnerNodes.push(
           <mark
-            key={`g-${matchIdx}-${gIdx}`}
-            className={`rx-g g${g.index % 8} ${isHot ? 'rx-hot' : ''}`}
+            key={`group-${matchIdx}-${gIdx}`}
+            className={`rx-g ${colorClass} ${activeClass}`}
           >
-            {g.text}
+            {group.text}
           </mark>
         );
 
-        groupLast = g.end;
-      });
-
-      // Remaining match text after last group
-      if (groupLast < m.end) {
-        groupNodes.push(testText.slice(groupLast, m.end));
+        groupCursor = group.end;
       }
 
+      // Remaining text inside this match after the last group
+      if (groupCursor < match.end) {
+        matchInnerNodes.push(testText.slice(groupCursor, match.end));
+      }
+
+      // Push the full match wrapper tag
       nodes.push(
-        <mark key={`m-${matchIdx}`}>
-          {groupNodes.length > 0 ? groupNodes : m.text}
+        <mark key={`match-${matchIdx}`}>
+          {matchInnerNodes.length > 0 ? matchInnerNodes : match.text}
         </mark>
       );
 
-      lastIndex = m.end;
-    });
+      textCursor = match.end;
+    }
 
-    if (lastIndex < testText.length) {
-      nodes.push(testText.slice(lastIndex));
+    // 3. Any trailing unmatched text at the end of the input
+    if (textCursor < testText.length) {
+      nodes.push(testText.slice(textCursor));
     }
 
     return nodes;

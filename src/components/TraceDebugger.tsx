@@ -190,7 +190,7 @@ export const TraceDebugger: React.FC<TraceDebuggerProps> = ({
         </div>
       </div>
 
-      {/* 1-Click Fix Banner if failed */}
+      {/* Quick fix suggestion if matching failed */}
       {!hasMatched && failureStep && onApplyFix && (
         <div className="p-2 mb-2 rounded bg-rose-500/10 border border-rose-500/30 flex items-center justify-between text-[11px] animate-modal-pop">
           <div className="flex items-center gap-2 text-rose-300">

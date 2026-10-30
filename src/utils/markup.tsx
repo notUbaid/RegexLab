@@ -1,25 +1,109 @@
 import React from 'react';
 
-/** Run a pattern over text and return marker-highlighted nodes (whole match yellow, capture groups in pen colours). */
+// Helper function to highlight regex matches in a string.
+// Full matches are wrapped in <mark>, and capture groups get colored badges.
 export function markup(text: string, pattern: string, flags = ''): { nodes: React.ReactNode[]; count: number; error: string } {
+  if (!text || !pattern) {
+    return { nodes: [text], count: 0, error: '' };
+  }
+
   try {
-    const fl = Array.from(new Set((flags.replace(/[yd]/g, '') + 'gd').split(''))).join('');
-    const out: React.ReactNode[] = []; let last = 0, n = 0;
-    for (const m of text.matchAll(new RegExp(pattern, fl))) {
-      if (!m[0]) continue;
-      const st = m.index ?? 0, en = st + m[0].length; n++;
-      if (st > last) out.push(text.slice(last, st));
-      const ind: ([number, number] | undefined)[] = (m as any).indices ?? [];
-      const kids: React.ReactNode[] = []; let c = st;
-      for (let g = 1; g < ind.length; g++) {
-        const r = ind[g]; if (!r || r[1] <= r[0] || r[0] < c) continue;
-        if (r[0] > c) kids.push(text.slice(c, r[0]));
-        kids.push(<mark key={`${g}-${r[0]}`} className={`rx-g g${g % 8}`}>{text.slice(r[0], r[1])}</mark>); c = r[1];
+    // Make sure 'g' and 'd' (indices) flags are enabled so we can get match positions
+    let cleanFlags = flags.replace(/[yd]/g, '') + 'gd';
+    // Remove duplicate flag characters
+    let uniqueFlags = '';
+    for (let char of cleanFlags) {
+      if (!uniqueFlags.includes(char)) {
+        uniqueFlags += char;
       }
-      if (c < en) kids.push(text.slice(c, en));
-      out.push(<mark key={st}>{kids}</mark>); last = en;
     }
-    out.push(text.slice(last));
-    return { nodes: out, count: n, error: '' };
-  } catch (e) { return { nodes: [text], count: 0, error: (e as Error).message }; }
+
+    const regex = new RegExp(pattern, uniqueFlags);
+    const nodes: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let matchCount = 0;
+
+    for (const match of text.matchAll(regex)) {
+      const matchText = match[0];
+      if (!matchText) {
+        continue;
+      }
+
+      const matchStart = match.index ?? 0;
+      const matchEnd = matchStart + matchText.length;
+      matchCount++;
+
+      // Append text that came before this match
+      if (matchStart > lastIndex) {
+        nodes.push(text.slice(lastIndex, matchStart));
+      }
+
+      // Check for capture group indices
+      const matchIndices = (match as any).indices as ([number, number] | undefined)[] | undefined;
+      const groupNodes: React.ReactNode[] = [];
+      let currentPos = matchStart;
+
+      if (matchIndices && matchIndices.length > 1) {
+        for (let g = 1; g < matchIndices.length; g++) {
+          const groupRange = matchIndices[g];
+          if (!groupRange) continue;
+
+          const groupStart = groupRange[0];
+          const groupEnd = groupRange[1];
+
+          if (groupEnd <= groupStart || groupStart < currentPos) {
+            continue;
+          }
+
+          // Text inside the match before this group
+          if (groupStart > currentPos) {
+            groupNodes.push(text.slice(currentPos, groupStart));
+          }
+
+          // The capture group itself
+          const groupSlice = text.slice(groupStart, groupEnd);
+          const colorClass = `rx-g g${g % 8}`;
+          groupNodes.push(
+            <mark key={`group-${g}-${groupStart}`} className={colorClass}>
+              {groupSlice}
+            </mark>
+          );
+
+          currentPos = groupEnd;
+        }
+      }
+
+      // Remaining text in match after the last capture group
+      if (currentPos < matchEnd) {
+        groupNodes.push(text.slice(currentPos, matchEnd));
+      }
+
+      // Wrap whole match
+      nodes.push(
+        <mark key={`match-${matchStart}`}>
+          {groupNodes.length > 0 ? groupNodes : matchText}
+        </mark>
+      );
+
+      lastIndex = matchEnd;
+    }
+
+    // Append any trailing text after the last match
+    if (lastIndex < text.length) {
+      nodes.push(text.slice(lastIndex));
+    }
+
+    return {
+      nodes: nodes,
+      count: matchCount,
+      error: '',
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return {
+      nodes: [text],
+      count: 0,
+      error: message,
+    };
+  }
 }

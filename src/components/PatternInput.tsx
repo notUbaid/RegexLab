@@ -73,7 +73,7 @@ export const PatternInput: React.FC<PatternInputProps> = ({
 
         <span className="font-mono text-xl text-foreground-dim select-none font-light">/</span>
 
-        {/* Flag Pills with Spring Pop & Tactile Switch Sound */}
+        {/* Flag buttons */}
         <div className="flex items-center gap-0.5 bg-surface-elevated/70 p-0.5 rounded border border-border select-none">
           {FLAGS.map(({ f, title }) => {
             const active = flags.includes(f);
@@ -97,7 +97,7 @@ export const PatternInput: React.FC<PatternInputProps> = ({
           })}
         </div>
 
-        {/* 1-Click Copy As Dropdown */}
+        {/* Copy as code dropdown */}
         <div className="relative">
           <button
             onClick={() => {

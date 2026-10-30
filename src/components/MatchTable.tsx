@@ -168,7 +168,7 @@ export const MatchTable: React.FC<MatchTableProps> = ({
                 <div className="p-3 border-b border-border space-y-2 bg-surface">
                   <div className="flex items-center justify-between">
                     <span className="font-mono font-semibold text-foreground">
-                      Match #{currentMatch.index + 1}
+                      Match #{selectedMatchIdx + 1}
                     </span>
                     <span className="font-mono text-[11px] text-foreground-dim">
                       chars [{currentMatch.start} - {currentMatch.end}] ({currentMatch.end - currentMatch.start} chars)

@@ -57,31 +57,41 @@ export const ChallengesModal: React.FC<ChallengesModalProps> = ({
     return REGEX_CHALLENGES.filter((c) => c.level === selectedLevel);
   }, [selectedLevel]);
 
-  // Test evaluator
+  // Check if the user's pattern correctly passes all test cases:
+  // 1. It must be valid regex syntax.
+  // 2. It must match all strings in mustMatch.
+  // 3. It must NOT match any strings in mustNotMatch.
   const testResults = useMemo(() => {
-    let rx: RegExp | null = null;
+    let compiledRegex: RegExp | null = null;
     let syntaxError = '';
 
     try {
-      rx = new RegExp(userPattern);
-    } catch (e) {
-      syntaxError = (e as Error).message;
+      compiledRegex = new RegExp(userPattern);
+    } catch (err) {
+      syntaxError = (err as Error).message;
     }
 
-    const matchChecks = activeChallenge.mustMatch.map((input) => {
-      if (!rx) return { input, passed: false, expected: true };
-      return { input, passed: rx.test(input), expected: true };
+    // Check items that must match
+    const matchChecks = activeChallenge.mustMatch.map((testString) => {
+      if (!compiledRegex) {
+        return { input: testString, passed: false, expected: true };
+      }
+      const isMatch = compiledRegex.test(testString);
+      return { input: testString, passed: isMatch, expected: true };
     });
 
-    const notMatchChecks = activeChallenge.mustNotMatch.map((input) => {
-      if (!rx) return { input, passed: false, expected: false };
-      return { input, passed: !rx.test(input), expected: false };
+    // Check items that must NOT match
+    const notMatchChecks = activeChallenge.mustNotMatch.map((testString) => {
+      if (!compiledRegex) {
+        return { input: testString, passed: false, expected: false };
+      }
+      const isMatch = compiledRegex.test(testString);
+      return { input: testString, passed: !isMatch, expected: false };
     });
 
-    const allPassed =
-      !syntaxError &&
-      matchChecks.every((c) => c.passed) &&
-      notMatchChecks.every((c) => c.passed);
+    const allMustMatchPassed = matchChecks.every((check) => check.passed);
+    const allMustNotMatchPassed = notMatchChecks.every((check) => check.passed);
+    const allPassed = !syntaxError && allMustMatchPassed && allMustNotMatchPassed;
 
     return {
       syntaxError,
