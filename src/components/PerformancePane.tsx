@@ -151,7 +151,7 @@ export const PerformancePane: React.FC<PerformancePaneProps> = ({
       {/* Adversarial Stress Test */}
       <div className="pt-2 border-t border-border flex items-center justify-between">
         <div className="text-[11px] text-foreground-dim">
-          Adversarial String Benchmark (testing with exponential backtracker)
+          Speed test against long strings (checks for slow backtracking)
         </div>
         <button
           onClick={runAdversarialTest}

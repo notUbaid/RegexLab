@@ -16,7 +16,7 @@ export const ExplanationPane: React.FC<ExplanationPaneProps> = ({
   if (explanation.length === 0) {
     return (
       <div className="h-full flex items-center justify-center text-foreground-dim font-mono text-xs">
-        No explanation available
+        Enter a pattern above to see an explanation
       </div>
     );
   }
@@ -24,8 +24,8 @@ export const ExplanationPane: React.FC<ExplanationPaneProps> = ({
   return (
     <div className="h-full overflow-y-auto bg-surface p-3 select-none font-mono text-xs space-y-2">
       <div className="flex items-center justify-between pb-2 border-b border-border text-[11px] text-foreground-dim">
-        <span>Natural Language Breakdown</span>
-        <span>Hover block to pinpoint token</span>
+        <span>Plain English Breakdown</span>
+        <span>Hover to highlight token</span>
       </div>
 
       <div className="space-y-1.5">

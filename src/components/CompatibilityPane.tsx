@@ -22,7 +22,7 @@ export const CompatibilityPane: React.FC<CompatibilityPaneProps> = ({
   return (
     <div className="h-full overflow-y-auto bg-surface p-3 select-none font-mono text-xs space-y-2">
       <div className="flex items-center justify-between pb-2 border-b border-border text-[11px] text-foreground-dim">
-        <span>Engine Compatibility Matrix (7 Flavors)</span>
+        <span>Other Languages & Engines (7 flavors)</span>
         <span>Click snippet to copy code</span>
       </div>
 

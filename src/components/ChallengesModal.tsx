@@ -139,7 +139,7 @@ export const ChallengesModal: React.FC<ChallengesModalProps> = ({
           <div className="flex items-center gap-2">
             <Trophy className="w-4 h-4 text-amber-400" />
             <span className="font-semibold text-xs text-foreground tracking-tight">
-              Regex Practice Challenges ({completedIds.size}/{REGEX_CHALLENGES.length} Completed)
+              Regex Practice Challenges ({completedIds.size}/{REGEX_CHALLENGES.length} solved)
             </span>
           </div>
           <button

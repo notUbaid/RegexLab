@@ -103,13 +103,7 @@ class SoundSynthesizer {
     }
   }
 
-  // ==========================================================================
-  // MECHANICAL SWITCH ACOUSTICS
-  // ==========================================================================
-
-  /**
-   * Main tactile keypress dispatcher based on active sound profile.
-   */
+  // Play a click sound on keypress depending on the active profile
   public playKeypress(): void {
     if (!this.isAudioEnabled) return;
     const ctx = this.initContext();
@@ -136,10 +130,7 @@ class SoundSynthesizer {
     }
   }
 
-  /**
-   * Lubed Linear / Gateron Ink Black "THOCK"
-   * Combines high-pass stem snap with low-frequency resonant bottom-out thud.
-   */
+  // Switch profile: Lubed Linear (Thock)
   private synthesizeThock(ctx: AudioContext): void {
     const now = ctx.currentTime;
 
@@ -185,10 +176,7 @@ class SoundSynthesizer {
     }
   }
 
-  /**
-   * Cherry MX Blue / Kailh Box White "CLICKY"
-   * Sharp tactile click-leaf snap followed by bottom-out impact.
-   */
+  // Switch profile: Cherry MX Blue (Clicky)
   private synthesizeClicky(ctx: AudioContext): void {
     const now = ctx.currentTime;
 
@@ -227,10 +215,7 @@ class SoundSynthesizer {
     osc2.stop(now + 0.035);
   }
 
-  /**
-   * Holy Panda "TACTILE"
-   * Distinct dual-stage bump followed by round bottom-out pop.
-   */
+  // Switch profile: Holy Panda (Tactile bump)
   private synthesizeTactile(ctx: AudioContext): void {
     const now = ctx.currentTime;
     const osc = ctx.createOscillator();
@@ -250,10 +235,7 @@ class SoundSynthesizer {
     osc.stop(now + 0.03);
   }
 
-  /**
-   * IBM Model M "BUCKLING SPRING"
-   * Metallic high coil ping with harmonic resonance.
-   */
+  // Switch profile: Model M (Buckling spring)
   private synthesizeBuckling(ctx: AudioContext): void {
     const now = ctx.currentTime;
 
@@ -280,10 +262,7 @@ class SoundSynthesizer {
     osc2.stop(now + 0.06);
   }
 
-  /**
-   * Retro Sci-Fi / Cyber Terminal
-   * Pure FM pulse with instant drop.
-   */
+  // Switch profile: 8-bit retro synth
   private synthesizeCyber(ctx: AudioContext): void {
     const now = ctx.currentTime;
     const osc = ctx.createOscillator();
@@ -303,13 +282,7 @@ class SoundSynthesizer {
     osc.stop(now + 0.02);
   }
 
-  // ==========================================================================
-  // UI INTERACTION SOUNDS (LATCHES, SLIDERS, TABS, ACTIONS)
-  // ==========================================================================
-
-  /**
-   * Heavy mechanical toggle latch (for flag pills and drawer toggles)
-   */
+  // Toggle switch sound for flags and buttons
   public playSwitch(state: boolean = true): void {
     if (!this.isAudioEnabled) return;
     const ctx = this.initContext();
@@ -337,9 +310,7 @@ class SoundSynthesizer {
     osc.stop(now + 0.025);
   }
 
-  /**
-   * Magnetic latch click (drawer open/close, inspector expand/minimize)
-   */
+  // Latch sound for drawers and modals
   public playLatch(): void {
     if (!this.isAudioEnabled) return;
     const ctx = this.initContext();
@@ -364,9 +335,7 @@ class SoundSynthesizer {
     osc.stop(now + 0.035);
   }
 
-  /**
-   * Smooth pneumatic slide tick (tab switching across inspector or match tables)
-   */
+  // Tab switch click
   public playTab(): void {
     if (!this.isAudioEnabled) return;
     const ctx = this.initContext();
@@ -391,9 +360,7 @@ class SoundSynthesizer {
     osc.stop(now + 0.02);
   }
 
-  /**
-   * Metallic double-click for 1-click Copy actions and Share URL
-   */
+  // Two-tone chime when copying to clipboard
   public playCopy(): void {
     if (!this.isAudioEnabled) return;
     const ctx = this.initContext();
@@ -429,9 +396,7 @@ class SoundSynthesizer {
     osc2.stop(now + 0.045);
   }
 
-  /**
-   * Precise stepper motor tick for stepping through NFA debugger
-   */
+  // Tick sound when stepping in debugger
   public playStepTick(): void {
     if (!this.isAudioEnabled) return;
     const ctx = this.initContext();
@@ -456,9 +421,7 @@ class SoundSynthesizer {
     osc.stop(now + 0.012);
   }
 
-  /**
-   * Polyphonic pentatonic triumph chord (C5 - E5 - G5 - B5 - D6) with warm envelope
-   */
+  // Celebration chime when solving challenges
   public playSuccess(): void {
     if (!this.isAudioEnabled) return;
     const ctx = this.initContext();
@@ -466,7 +429,6 @@ class SoundSynthesizer {
 
     this.triggerHaptic(20);
     const now = ctx.currentTime;
-    // Frequencies: C5, E5, G5, B5, D6
     const chordNotes = [523.25, 659.25, 783.99, 987.77, 1174.66];
 
     chordNotes.forEach((freq, idx) => {
@@ -489,9 +451,7 @@ class SoundSynthesizer {
     });
   }
 
-  /**
-   * Low resonant hollow wooden knock for invalid regex or backtrack alerts
-   */
+  // Warning tone for regex errors or alerts
   public playWarning(): void {
     if (!this.isAudioEnabled) return;
     const ctx = this.initContext();
@@ -516,9 +476,7 @@ class SoundSynthesizer {
     osc.stop(now + 0.14);
   }
 
-  /**
-   * Ultra-light glass plink for hovering over capture groups or token nodes
-   */
+  // Soft plink when hovering over tokens or nodes
   public playHoverPlink(pitchMult: number = 1.0): void {
     if (!this.isAudioEnabled) return;
     const ctx = this.initContext();

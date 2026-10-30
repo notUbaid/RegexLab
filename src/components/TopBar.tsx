@@ -156,7 +156,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               <div className="fixed inset-0 z-40" onClick={() => setSoundMenuOpen(false)} />
               <div className="absolute right-0 mt-1 w-48 py-1 rounded-md bg-surface border border-border shadow-2xl z-50 animate-modal-pop">
                 <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-foreground-dim border-b border-border/50">
-                  Switch Acoustics
+                  Switch Sound
                 </div>
                 {SOUND_PROFILES.map((p) => (
                   <button

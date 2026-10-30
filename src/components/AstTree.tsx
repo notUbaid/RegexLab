@@ -128,7 +128,7 @@ export const AstTree: React.FC<AstTreeProps> = ({
   if (!ast || (!ast.children && !ast.type)) {
     return (
       <div className="h-full flex items-center justify-center text-foreground-dim font-mono text-xs">
-        No AST available
+        Enter a pattern above to see the syntax tree
       </div>
     );
   }
@@ -136,7 +136,7 @@ export const AstTree: React.FC<AstTreeProps> = ({
   return (
     <div className="h-full overflow-y-auto bg-surface p-3 space-y-1">
       <div className="flex items-center justify-between pb-2 mb-2 border-b border-border text-[11px] text-foreground-dim">
-        <span>Abstract Syntax Tree (AST)</span>
+        <span>Syntax Tree (AST)</span>
         <span>Click node to expand/collapse</span>
       </div>
       <AstNodeRow

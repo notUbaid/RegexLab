@@ -86,7 +86,7 @@ export const LibraryModal: React.FC<LibraryModalProps> = ({
         <div className="h-11 px-4 border-b border-border bg-surface-subtle flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-xs text-foreground tracking-tight">
-              Preset Pattern Library ({PATTERN_LIBRARY.length} patterns)
+              Preset Patterns ({PATTERN_LIBRARY.length})
             </span>
             <kbd className="px-1.5 py-0.2 rounded bg-surface border border-border text-[10px] text-foreground-dim">
               ESC

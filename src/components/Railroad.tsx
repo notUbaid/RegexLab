@@ -50,7 +50,7 @@ export const Railroad: React.FC<RailroadProps> = ({
   if (tokens.length === 0) {
     return (
       <div className="h-full flex items-center justify-center text-foreground-dim font-mono text-xs">
-        Enter a pattern above to generate the railroad state graph
+        Type a regex pattern above to see the diagram
       </div>
     );
   }
@@ -58,8 +58,8 @@ export const Railroad: React.FC<RailroadProps> = ({
   return (
     <div className="w-full h-full overflow-x-auto overflow-y-hidden bg-surface p-3 flex flex-col justify-center select-none font-mono">
       <div className="flex items-center justify-between mb-2 text-[11px] text-foreground-dim">
-        <span>Railroad State Diagram</span>
-        <span>{tokens.length} state nodes</span>
+        <span>Railroad Diagram</span>
+        <span>{tokens.length} nodes</span>
       </div>
 
       <div className="flex-1 min-h-[140px] flex items-center">
