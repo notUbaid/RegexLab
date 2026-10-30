@@ -1,5 +1,5 @@
-import React from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronDown, ChevronUp, Maximize2, Minimize2 } from 'lucide-react';
 import { RegexAnalysisResult } from '../engine/types';
 import { Railroad } from './Railroad';
 import { AstTree } from './AstTree';
@@ -52,11 +52,17 @@ export const Inspector: React.FC<InspectorProps> = ({
   onToggleCollapse,
   onApplyFix,
 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const heightClass = isCollapsed
+    ? 'h-9'
+    : isExpanded
+    ? 'h-96'
+    : 'h-64';
+
   return (
     <div
-      className={`border-t border-border bg-surface flex flex-col shrink-0 select-none transition-all duration-200 ${
-        isCollapsed ? 'h-9' : 'h-64'
-      }`}
+      className={`border-t border-border bg-surface flex flex-col shrink-0 select-none transition-all duration-200 ${heightClass}`}
     >
       {/* Tab Bar Header (Text-only tabs, no icon soup) */}
       <div className="h-9 px-3 border-b border-border bg-surface-subtle flex items-center justify-between text-xs">
@@ -82,11 +88,20 @@ export const Inspector: React.FC<InspectorProps> = ({
           })}
         </div>
 
-        {/* Minimize / Expand Toggle */}
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] font-mono text-foreground-dim hidden sm:inline">
-            Bottom Inspector
+        {/* Height Controls & Collapse Toggle */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-[11px] font-mono text-foreground-dim hidden sm:inline mr-1">
+            Inspector
           </span>
+          {!isCollapsed && (
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="p-1 rounded text-foreground-dim hover:text-foreground hover:bg-surface-elevated transition-colors"
+              title={isExpanded ? 'Restore height' : 'Expand height (h-96)'}
+            >
+              {isExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+            </button>
+          )}
           <button
             onClick={onToggleCollapse}
             className="p-1 rounded text-foreground-dim hover:text-foreground hover:bg-surface-elevated transition-colors"

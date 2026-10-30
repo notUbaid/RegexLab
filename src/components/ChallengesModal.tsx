@@ -40,6 +40,17 @@ export const ChallengesModal: React.FC<ChallengesModalProps> = ({
     setShowHint(false);
   }, [activeChallenge]);
 
+  // Handle escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   const filteredChallenges = useMemo(() => {
     if (selectedLevel === 'All') return REGEX_CHALLENGES;
     return REGEX_CHALLENGES.filter((c) => c.level === selectedLevel);
@@ -79,9 +90,9 @@ export const ChallengesModal: React.FC<ChallengesModalProps> = ({
     };
   }, [userPattern, activeChallenge]);
 
-  // Handle completion trigger
+  // Handle completion trigger (ONLY when modal is open and solved)
   useEffect(() => {
-    if (testResults.allPassed && !completedIds.has(activeChallenge.id)) {
+    if (isOpen && testResults.allPassed && !completedIds.has(activeChallenge.id)) {
       confetti({
         particleCount: 60,
         spread: 60,
@@ -95,7 +106,7 @@ export const ChallengesModal: React.FC<ChallengesModalProps> = ({
         // ignore
       }
     }
-  }, [testResults.allPassed, activeChallenge.id, completedIds]);
+  }, [isOpen, testResults.allPassed, activeChallenge.id, completedIds]);
 
   const handleLoadWorkspace = () => {
     const combinedTest = [
@@ -109,8 +120,14 @@ export const ChallengesModal: React.FC<ChallengesModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="w-full max-w-4xl max-h-[90vh] bg-surface border border-border rounded-lg flex flex-col shadow-2xl overflow-hidden select-none font-mono">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-4xl max-h-[90vh] bg-surface border border-border rounded-lg flex flex-col shadow-2xl overflow-hidden select-none font-mono"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="h-11 px-4 border-b border-border bg-surface-subtle flex items-center justify-between">
           <div className="flex items-center gap-2">

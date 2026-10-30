@@ -151,7 +151,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Share Button */}
         <button
           onClick={onShare}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-primary text-primary-fg font-medium text-xs hover:opacity-90 transition-opacity"
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-foreground text-background font-semibold text-xs hover:bg-foreground/90 transition-colors"
           title="Copy shareable URL (Ctrl+S)"
         >
           {shareCopied ? <Check className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}

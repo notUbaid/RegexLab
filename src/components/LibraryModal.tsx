@@ -68,8 +68,14 @@ export const LibraryModal: React.FC<LibraryModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="w-full max-w-3xl max-h-[85vh] bg-surface border border-border rounded-lg flex flex-col shadow-2xl overflow-hidden select-none font-mono">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-3xl max-h-[85vh] bg-surface border border-border rounded-lg flex flex-col shadow-2xl overflow-hidden select-none font-mono"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="h-11 px-4 border-b border-border bg-surface-subtle flex items-center justify-between">
           <div className="flex items-center gap-2">

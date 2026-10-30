@@ -7,6 +7,17 @@ interface RailroadProps {
   onHoverToken: (id: string | null) => void;
 }
 
+const CATEGORY_LABELS: Record<string, string> = {
+  character_class: 'class',
+  quantifier: 'quant',
+  alternation: 'or',
+  lookaround: 'look',
+  literal: 'lit',
+  anchor: 'pos',
+  group: 'group',
+  special: 'esc',
+};
+
 export const Railroad: React.FC<RailroadProps> = ({
   tokens,
   hoveredTokenId,
@@ -16,9 +27,9 @@ export const Railroad: React.FC<RailroadProps> = ({
   const layout = useMemo(() => {
     let currentX = 50;
     const centerY = 60;
-    const nodeSpacing = 16;
+    const nodeSpacing = 18;
     const items = tokens.map((t) => {
-      const textWidth = Math.max(36, t.raw.length * 9 + 20);
+      const textWidth = Math.max(44, t.raw.length * 10 + 20);
       const x = currentX;
       currentX += textWidth + nodeSpacing;
       return {
@@ -133,9 +144,9 @@ export const Railroad: React.FC<RailroadProps> = ({
                   x={x + w / 2}
                   y={y - 6}
                   textAnchor="middle"
-                  className="fill-foreground-dim text-[9px] pointer-events-none"
+                  className="fill-foreground-dim text-[9px] uppercase tracking-wider font-semibold pointer-events-none"
                 >
-                  {token.category}
+                  {CATEGORY_LABELS[token.category] || token.category}
                 </text>
               </g>
             );
