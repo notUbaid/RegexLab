@@ -1,11 +1,14 @@
 import React from 'react';
-import { Play, Workflow, Blocks, Network, Bug, Gauge, Globe2, Library, GitCompare, Trophy } from 'lucide-react';
+import { Sparkles, Play, Workflow, Blocks, Network, Bug, Gauge, Globe2, Library, GitCompare, Trophy } from 'lucide-react';
 import { AppView } from '../../types/regex';
 
 export interface NavItem { view: AppView; label: string; hint: string; icon: React.ReactNode }
 const i = 'w-4 h-4';
 export const NAV_GROUPS: { title?: string; items: NavItem[] }[] = [
-  { items: [{ view: 'playground', label: 'Playground', hint: 'Write a pattern and see matches live', icon: <Play className={i} /> }] },
+  { items: [
+    { view: 'landing', label: 'Overview', hint: 'Introduction and interactive live specimens', icon: <Sparkles className={i} /> },
+    { view: 'playground', label: 'Playground', hint: 'Write a pattern and see matches live', icon: <Play className={i} /> },
+  ] },
   { title: 'Understand', items: [
     { view: 'visualizer', label: 'Step by step', hint: 'Watch the engine match one character at a time', icon: <Workflow className={i} /> },
     { view: 'ast', label: 'Pattern tree', hint: 'See how a pattern is structured', icon: <Network className={i} /> },

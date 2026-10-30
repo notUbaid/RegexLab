@@ -66,7 +66,12 @@ export const TestTextEditor: React.FC = () => {
         <div className="relative ruled" style={{ height: H }}>
           <div ref={bgRef} aria-hidden className="rx-text rx-layer absolute inset-0 overflow-hidden pointer-events-none select-none text-transparent">{highlights()}{'\n'}</div>
           <textarea id="rx-test" ref={taRef} wrap="off" value={testText} onChange={(e) => setTestText(e.target.value)}
-            onScroll={() => { if (taRef.current && bgRef.current) bgRef.current.scrollLeft = taRef.current.scrollLeft; }}
+            onScroll={() => {
+              if (taRef.current && bgRef.current) {
+                bgRef.current.scrollLeft = taRef.current.scrollLeft;
+                bgRef.current.scrollTop = taRef.current.scrollTop;
+              }
+            }}
             placeholder="Paste text to test your pattern against" spellCheck={false} style={{ height: H }}
             className="rx-text relative z-10 block w-full bg-transparent text-foreground placeholder:text-foreground-dim focus:outline-none resize-none overflow-x-auto overflow-y-hidden" />
         </div>

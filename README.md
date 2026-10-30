@@ -69,7 +69,7 @@ The application includes 10 dedicated interactive tools, built in a warm studio 
 ### Installation and Local Development
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-username/regexlab.git
+git clone https://github.com/notUbaid/RegexLab.git
 cd regexlab
 
 # 2. Install project dependencies
@@ -77,7 +77,13 @@ npm install
 
 # 3. Start the Vite development server
 npm run dev
+
+# 4. Preview the production build
+npm run build && npm run preview
 ```
+
+### Video Demo Walkthrough
+Looking to record a product demo or showcase? See the step-by-step [Video Demo Guide](docs/VIDEO_DEMO_GUIDE.md) for an exact 2-minute scene-by-scene script and voiceover walkthrough.
 
 Open your browser and navigate to `http://localhost:5173`.
 

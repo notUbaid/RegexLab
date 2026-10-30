@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useRegexStore } from '../../store/useRegexStore';
 import { Theme } from '../../types/regex';
 import { ALL_NAV } from './navItems';
-import { Share2, Volume2, VolumeX, Check, Sun, Moon } from 'lucide-react';
+import { Share2, Volume2, VolumeX, Check, Sun, Moon, BookOpen } from 'lucide-react';
 import { soundFX } from '../../utils/soundEffects';
 
 interface HeaderProps { onOpenShare: () => void; onOpenCheatSheet: () => void }
@@ -13,15 +13,32 @@ const THEMES: { id: Theme; label: string; dot: string }[] = [
   { id: 'nord', label: 'Fjord', dot: '#263a3c' }, { id: 'dracula', label: 'Plum', dot: '#3a2c48' },
 ];
 
-export const Header: React.FC<HeaderProps> = ({ onOpenShare }) => {
+export const Header: React.FC<HeaderProps> = ({ onOpenShare, onOpenCheatSheet }) => {
   const { activeView, theme, setTheme, soundEnabled, setSoundEnabled } = useRegexStore();
   const [open, setOpen] = useState(false);
   const current = ALL_NAV.find((n) => n.view === activeView);
   const ghost = 'p-2 rounded-md text-foreground-muted hover:text-foreground hover:bg-surface-elevated transition-colors';
 
   return (
-    <header className="sticky top-0 lg:top-0 max-lg:top-12 z-30 h-14 flex items-center justify-end px-6 pointer-events-none">
-      <div className="flex items-center gap-1 pointer-events-auto">
+    <header className="sticky top-0 lg:top-0 max-lg:top-12 z-30 h-14 flex items-center justify-between px-6 pointer-events-none">
+      <div className="flex items-center gap-2 pointer-events-auto">
+        {current && (
+          <span className="hidden sm:inline-flex text-xs font-medium text-foreground-dim font-mono">
+            / {current.label}
+          </span>
+        )}
+      </div>
+      <div className="flex items-center gap-1.5 pointer-events-auto">
+        <button
+          onClick={onOpenCheatSheet}
+          className="flex items-center gap-1.5 h-8 px-2.5 rounded-md text-[13px] text-foreground-muted hover:text-foreground hover:bg-surface-elevated transition-colors"
+          title="Open Cheat Sheet (Ctrl+K)"
+          aria-label="Open Cheat Sheet"
+        >
+          <BookOpen className="w-3.5 h-3.5 text-foreground-dim" />
+          <span className="hidden md:inline">Cheat sheet</span>
+          <kbd className="hidden lg:inline-block px-1.5 py-0.5 text-[10px] rounded bg-surface border border-border font-mono text-foreground-dim">Ctrl K</kbd>
+        </button>
         <button className={ghost} aria-label={soundEnabled ? 'Mute sounds' : 'Turn on sounds'}
           onClick={() => { const n = !soundEnabled; setSoundEnabled(n); soundFX.setEnabled(n); if (n) soundFX.playSuccess(); }}>
           {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}

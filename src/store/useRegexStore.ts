@@ -189,7 +189,7 @@ export const useRegexStore = create<RegexStoreState>((set, get) => ({
   flags: INITIAL_DEFAULT_FLAGS,
   testText: INITIAL_DEFAULT_TEST_TEXT,
   replacementText: 'User: $1 | Domain: $2.$3',
-  activeView: 'playground',
+  activeView: 'landing',
   theme: 'dark',
   soundEnabled: false,
 
