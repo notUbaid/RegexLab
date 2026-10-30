@@ -3,6 +3,11 @@
   "private": true,
   "version": "1.0.0",
   "description": "Fast, client-side regular expression IDE and interactive execution visualizer",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/notUbaid/RegexLab.git"
+  },
+  "author": "Ubaid",
   "license": "MIT",
   "type": "module",
   "scripts": {
