@@ -1,277 +1,142 @@
-<div align="center">
-
 # RegexLab
-### The Visual Regular Expression Laboratory and Educational Playground
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-19.0-61dafb.svg?style=flat-square&logo=react)](https://react.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8.svg?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
-[![Three.js](https://img.shields.io/badge/Three.js-WebGL-black.svg?style=flat-square&logo=three.js)](https://threejs.org/)
-[![D3.js](https://img.shields.io/badge/D3.js-v7-orange.svg?style=flat-square&logo=d3.js)](https://d3js.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
+A tool-grade regular expression IDE and analyzer built with React, TypeScript, and Tailwind CSS.
 
-**Understand how regex engines think. Build, test, debug, and master regular expressions visually.**
-
-[Features](#features-in-depth) | [Quick Start](#quick-start) | [Regex 101 Tutorial](#regex-101-for-absolute-beginners) | [Architecture](#architecture-and-data-pipelines) | [Engine Matrix](#multi-engine-compatibility-matrix)
+RegexLab runs a unified, pure parse-and-analysis pipeline in real time. Instead of switching views to inspect an expression, all tools—pattern input, test editor, match inspector, railroad state graph, AST explorer, step-by-step trace debugger, ReDoS complexity detector, and multi-engine matrix—operate inside a single consolidated workspace.
 
 ---
 
-</div>
+## Workspace Layout
 
-## The Vision
+1. **Top Bar & Pattern Input**
+   - Pattern editor (`/pattern/flags`) with interactive flag pills (`g`, `i`, `m`, `s`, `u`).
+   - One-click **Copy As** generator for JavaScript literals, RegExp constructors, Python `re.compile`, Go `regexp.MustCompile`, and Rust `Regex::new`.
+   - **Inline Telemetry Strip** linking directly to inspector tabs (`N matches · X steps (Y ms) · Safe O(n) · Engines`).
+   - Quick access to Token Palette, Presets Library, Practice Challenges, Cheatsheet (`Ctrl+K`), themes, and URL Sharing (`Ctrl+S`).
 
-Regular expressions are one of the most useful utilities in software development, but they can be confusing and intimidating when you are first learning them.
+2. **Middle Split Workspace**
+   - **Left: Test String Editor**: Ruled line-number gutter, layered syntax highlighting for full matches and indexed capture groups (`g0`–`g7`), sample text dropdown, and synchronized scrolling.
+   - **Right: Inspector Pane**:
+     - *Matches & Groups*: Detailed match offsets `[start, end]` and capture groups table with hover pinpointing.
+     - *Replace Sandbox*: Live substitution preview with quick insertion pills (`$1`, `$2`, `$&`, etc.).
+     - *Pattern Compare*: Live side-by-side comparison of two patterns against the same test input.
 
-Most existing regex tools on the web are built for developers who already know regular expressions. They give you a text box, an input area, and a list of matches. They help you test patterns, but they do not really help you understand how the engine evaluates them.
+3. **Collapsible Left Drawer**
+   - Click-to-insert Token Palette covering character classes, quantifiers, anchors, capture groups, and lookarounds.
 
-RegexLab turns regular expressions from cryptic symbols into visual, intuitive, and interactive state machines.
+4. **Bottom Inspector Drawer**
+   - **Visualizer**: Railroad state machine graph mapping tokens and execution paths.
+   - **AST**: Interactive syntax tree with recursive depth indentation, node category badges, and hover sync.
+   - **Debugger**: Step-by-step NFA execution trace, failure pinpointer, and one-click fixes.
+   - **Performance**: ReDoS complexity analyzer detecting polynomial and exponential backtracking risk, plus a real-time adversarial string benchmark.
+   - **Compatibility**: Support matrix across 7 engines (JavaScript, Python, PCRE2, Go, Rust, Java, .NET) with syntax warnings and ready-to-copy code snippets.
+   - **Explanation**: Sentence-by-sentence natural language breakdown synchronized with token highlights.
 
-Instead of staring at a pattern like this:
-```regex
-^(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$
+---
+
+## Engine Architecture
+
+All regex analysis is executed via a single pure pass in `src/engine/analyze.ts`:
+
+```ts
+const analysis = analyzeRegex(pattern, flags, testText);
 ```
 
-RegexLab breaks it down into plain English steps:
-- Assert start of string (`^`)
-- Positive lookahead: must contain at least one uppercase letter (`[A-Z]`)
-- Positive lookahead: must contain at least one digit (`\d`)
-- Between 8 and infinite allowed characters (`{8,}`)
-- Assert end of string (`$`)
+This single pass tokenizes the input via a recursive descent tokenizer, builds an AST, executes the matcher with capture group indices, traces NFA transitions, evaluates ReDoS vulnerability heuristics, and evaluates multi-engine dialect compatibility.
+
+See [`docs/ENGINE.md`](docs/ENGINE.md) for a technical walkthrough of how a pattern like `a(b|c)*` moves through tokens, AST nodes, and Thompson NFA transitions.
 
 ---
 
-## Visual Tour
+## Project Structure
 
-The application includes 10 dedicated interactive tools, built in a warm studio obsidian theme with 6 tactile palettes:
-
-| View | Description | Screenshot |
-| :--- | :--- | :--- |
-| **01. Overview** | Live interactive specimens with highlighter swipe and sample patterns | [`screenshots/01-landing.png`](screenshots/01-landing.png) |
-| **02. Playground** | Real-time regex testing with live match highlighting and replacement preview | [`screenshots/02-playground.png`](screenshots/02-playground.png) |
-| **03. Step-by-Step** | Step-by-step matcher showing how regex tests letters one by one with a visual path | [`screenshots/03-visualizer.png`](screenshots/03-visualizer.png) |
-| **04. No-Code Builder** | Click-to-build block builder with live regex compilation and plain-English preview | [`screenshots/04-builder.png`](screenshots/04-builder.png) |
-| **05. Regex Tree** | Visual family tree breaking down every part and group of your regex pattern | [`screenshots/05-ast.png`](screenshots/05-ast.png) |
-| **06. Fix Errors** | Debugger that pinpoints where your regex stopped matching and suggests 1-click fixes | [`screenshots/06-debugger.png`](screenshots/06-debugger.png) |
-| **07. Speed Check** | Speed and loop analyzer that checks if your pattern could freeze the browser or server | [`screenshots/07-performance.png`](screenshots/07-performance.png) |
-| **08. Languages** | Simple check to see if your regex works in Python, JS, Java, Go, Rust, or C# | [`screenshots/08-compatibility.png`](screenshots/08-compatibility.png) |
-| **09. Examples** | Searchable catalog of ready-to-use patterns for emails, passwords, URLs, and dates | [`screenshots/09-library.png`](screenshots/09-library.png) |
-| **10. Compare** | Side-by-side comparison to see which of two regex patterns is faster and simpler | [`screenshots/10-compare.png`](screenshots/10-compare.png) |
-| **11. Practice** | 11 beginner-friendly practice puzzles to test your skills from easy to advanced | [`screenshots/11-challenges.png`](screenshots/11-challenges.png) |
+```
+RegexLab/
+├── docs/
+│   └── ENGINE.md            # Lexer, AST, and NFA execution explanation
+├── public/
+│   ├── logo.svg
+│   └── og-image.png
+├── src/
+│   ├── engine/              # Pure engine pipeline
+│   │   ├── types.ts         # Token, AST, Match, Trace, and Complexity types
+│   │   ├── lexer.ts         # Tokenizer with byte spans and categories
+│   │   ├── parser.ts        # AST construction
+│   │   ├── matcher.ts       # Match execution and NFA trace simulation
+│   │   ├── complexity.ts    # ReDoS detector and time complexity heuristics
+│   │   ├── compatibility.ts # 7-engine feature support matrix
+│   │   ├── translator.ts    # Natural language sentence generator
+│   │   └── analyze.ts       # Memoizable pure analysis entrypoint
+│   ├── components/          # Workspace UI components
+│   │   ├── Workspace.tsx    # Single-screen IDE coordinator & URL state sync
+│   │   ├── TopBar.tsx       # Header controls, presets, cheatsheet, share
+│   │   ├── PatternInput.tsx # Regex input, flag pills, Copy As, inline telemetry
+│   │   ├── TestEditor.tsx   # Ruled gutter, layered highlighting, scroll sync
+│   │   ├── MatchTable.tsx   # Capture groups table, replace, pattern compare
+│   │   ├── TokenPalette.tsx # Collapsible quick-insert token drawer
+│   │   ├── Inspector.tsx    # Bottom drawer with text-only tabs
+│   │   ├── Railroad.tsx     # SVG state diagram
+│   │   ├── AstTree.tsx      # Interactive AST tree
+│   │   ├── TraceDebugger.tsx# Step-by-step NFA execution trace
+│   │   ├── PerformancePane.tsx # ReDoS curve and adversarial benchmark
+│   │   ├── CompatibilityPane.tsx # Engine matrix and code snippets
+│   │   ├── ExplanationPane.tsx # Natural language breakdown
+│   │   ├── CheatsheetModal.tsx # Searchable syntax reference (Ctrl+K)
+│   │   ├── LibraryModal.tsx # Searchable preset patterns
+│   │   └── ChallengesModal.tsx # Practice challenges with test suite
+│   ├── data/
+│   │   ├── challenges.ts    # 11 interactive regex puzzles
+│   │   └── patternLibrary.ts# 50+ curated production patterns
+│   ├── styles/
+│   │   └── index.css        # Studio dark theme & highlight layers
+│   ├── types/
+│   │   └── regex.ts         # Shared data interfaces
+│   ├── utils/
+│   │   ├── markup.tsx       # Layered highlight marker utilities
+│   │   └── soundEffects.ts  # Web Audio procedural tactile feedback
+│   ├── App.tsx              # Root mounting Workspace
+│   └── main.tsx             # DOM root
+├── package.json
+├── tailwind.config.js
+├── tsconfig.json
+└── vite.config.ts
+```
 
 ---
 
-## Quick Start
+## Getting Started
 
 ### Prerequisites
-- Node.js version 18.0 or higher
-- npm, pnpm, or yarn
 
-### Installation and Local Development
+- Node.js 18+
+- npm or pnpm
+
+### Installation
+
 ```bash
-# 1. Clone the repository
 git clone https://github.com/notUbaid/RegexLab.git
-cd regexlab
-
-# 2. Install project dependencies
+cd RegexLab
 npm install
-
-# 3. Start the Vite development server
-npm run dev
-
-# 4. Preview the production build
-npm run build && npm run preview
 ```
 
-Open your browser and navigate to `http://localhost:5173`.
+### Development Server
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ### Production Build
+
 ```bash
-# Type check and build production bundle
 npm run build
-
-# Preview the production build locally
-npm run preview -- --port 4173
 ```
 
----
-
-## Regex 101 for Absolute Beginners
-
-If regular expressions are brand new to you, here is a quick overview of the most common symbols you will encounter:
-
-### 1. Position Anchors (Where to Match)
-- `^`: **Start of Line** - Asserts that the match starts at the beginning of the text (or line with `/m` flag).
-- `$`: **End of Line** - Asserts that the match ends at the end of the text.
-- `\b`: **Word Boundary** - Matches the boundary between a word character and a non-word character (e.g. spaces or punctuation).
-
-### 2. Character Classes (What Characters to Match)
-- `\d`: Any **digit** from `0` to `9` (same as `[0-9]`).
-- `\D`: Any **non-digit** character.
-- `\w`: Any **word character** (letters `a-z`, `A-Z`, digits `0-9`, and underscore `_`).
-- `\W`: Any **non-word character**.
-- `\s`: Any **whitespace** character (space, tab, or newline).
-- `\S`: Any **non-whitespace** character.
-- `.`: **Wildcard** - Matches any single character except line breaks.
-- `[abc]`: **Character Set** - Matches either `'a'`, `'b'`, or `'c'`.
-- `[^abc]`: **Negated Character Set** - Matches any character except `'a'`, `'b'`, or `'c'`.
-
-### 3. Quantifiers (How Many Times to Match)
-- `*`: **Zero or more times** (optional repeat, greedy).
-- `+`: **One or more times** (at least once, greedy).
-- `?`: **Optional** (0 or 1 time).
-- `{3}`: Exactly **3 times**.
-- `{2,5}`: Between **2 and 5 times**.
-- `*?` or `+?`: **Lazy Quantifier** - Matches as few characters as possible rather than as many as possible.
-
-### 4. Groups and Lookarounds
-- `(abc)`: **Capture Group** - Groups patterns together and saves the matched text into group variables (`$1`, `$2`).
-- `(?:abc)`: **Non-Capturing Group** - Groups patterns for repetition without saving them into capture memory.
-- `(?<name>abc)`: **Named Capture Group** - Captures text into a named variable (`groups.name`).
-- `(?=abc)`: **Positive Lookahead** - Asserts that `'abc'` follows immediately without including it in the match.
-- `(?!abc)`: **Negative Lookahead** - Asserts that `'abc'` does not follow.
-
----
-
-## Features in Depth
-
-### 1. Interactive Regex Playground
-- Real-time syntax validation with inline error feedback.
-- Sub-pixel layered text highlighting: match backgrounds and 8 distinct capture group colors sit directly underneath your editable textarea with character-level accuracy.
-- Substitution sandbox supporting `$1`, `$2`, `$&`, and `$\`` replacement variables.
-- One-click token inserters for common patterns (`\d`, `\w`, `\s`, `[a-z]`, `(...)`, `a|b`).
-
-### 2. Live Human Translator
-- Converts regular expression tokens into plain English sentences as you type.
-- Bidirectional hover highlighting: hover over any token in the regex editor to highlight the corresponding explanation, or hover over an explanation card to highlight the token in the pattern.
-
-### 3. Engine Visualizer with D3.js State Machine Graph
-- Watch how a regex virtual machine executes step-by-step.
-- Interactive D3 vector state graph featuring cubic bezier curves, traversal particle animations, and pulsing active state rings.
-- Frame scrubber, playback controls, adjustable speeds (0.5x, 1x, 2x, 5x), and backtracking alerts.
-
-### 4. Visual No-Code Regex Builder
-- Assemble regular expressions without having to write syntax by hand.
-- Add blocks for letters, digits, whitespace, ranges, and custom character sets with intuitive repetition dropdowns.
-- Live regex compilation and synchronized plain-English preview.
-
-### 5. AST Explorer
-- Hierarchical syntax tree explorer with pan, zoom, expand, and collapse actions.
-- Detailed token attribute inspector showing character ranges, quantifier bounds, and capture group indices.
-
-### 6. Regex Failure Debugger
-- When a match fails, RegexLab shows where and why it failed.
-- Pinpoints the character index where the engine stopped matching.
-- Highlights the expected token, the actual character found, and offers one-click fixes.
-
-### 7. Performance and ReDoS Analyzer
-- Scans patterns for catastrophic backtracking risks (nested quantifiers like `(a+)+` or overlapping alternations like `(a|a)+`).
-- Interactive D3 theoretical complexity chart comparing linear $O(N)$, polynomial $O(N^k)$, and exponential $O(2^N)$ curves with an adjustable text length slider.
-
-### 8. Multi-Engine Compatibility Matrix
-- Evaluates feature support across 7 engines: **JavaScript**, **Python**, **PCRE2**, **Java**, **Go (RE2)**, **Rust**, and **.NET**.
-- Explains engine architectural differences and provides equivalent translated patterns when syntax is unsupported.
-
-### 9. Tactile Web Audio Sound Synthesizer
-- Zero external audio files to download; generates procedural acoustic feedback using the browser Web Audio API:
-  - 800Hz damped mechanical clicks on keystrokes.
-  - 1200Hz subtle ticks on debugger stepping.
-  - Harmonic 4-tone chord arpeggio (C5-E5-G5-C6) on match success and challenge completion.
-  - 90Hz sawtooth hum on ReDoS risk alerts.
-  - Global sound toggle in the header.
-
----
-
-## Multi-Engine Compatibility Matrix
-
-| Feature | JavaScript (V8) | Python (re) | PCRE2 / PHP | Java (util.regex) | Go (RE2) | Rust (regex) | .NET (C#) |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Lookaheads `(?=)`** | Yes | Yes | Yes | Yes | No *(linear O(N))* | No *(linear O(N))* | Yes |
-| **Fixed Lookbehinds `(?<=)`** | Yes | Yes | Yes | Yes | No | No | Yes |
-| **Variable Lookbehinds** | Yes *(V8 only)* | No *(needs `regex`)* | Yes | Partial *(finite max)* | No | No | Yes |
-| **Named Groups `(?<name>)`** | Yes | Partial `(?P<name>)` | Yes | Yes | Partial `(?P<name>)` | Partial `(?P<name>)` | Yes |
-| **Possessive Quantifiers `++`** | No | No *(needs `regex`)* | Yes | Yes | No | No | Yes |
-| **Atomic Groups `(?>)`** | No | No | Yes | Yes | No | No | Yes |
-| **Unicode Properties `\p{L}`** | Yes *(with `u`)* | Yes | Yes | Yes | Yes | Yes | Yes |
-| **ReDoS Vulnerability** | Possible | Possible | Possible | Possible | Immune | Immune | Safe *(with timeout)* |
-
----
-
-## Architecture and Data Pipelines
-
-```mermaid
-flowchart LR
-    A["Raw Regex Input"] --> B["Tokenizer (tokenizer.ts)"]
-    B --> C["AST Parser (ast.ts)"]
-    B --> D["Human Translator (translator.ts)"]
-    B --> E["Virtual Machine (stateMachine.ts)"]
-    B --> F["ReDoS Analyzer (redosAnalyzer.ts)"]
-    
-    C --> G["D3 State Machine Graph"]
-    F --> H["D3 Complexity Chart"]
-    E --> I["Step Execution Ribbon"]
-```
-
-For complete technical documentation:
-- [System Architecture and State Flow](docs/ARCHITECTURE.md)
-- [Engine Guide and ReDoS Mathematics](docs/ENGINE_GUIDE.md)
-- [Parser Pipeline and Compiler Guide](docs/PARSER_PIPELINE.md)
-- [Coding Standards and Best Practices](docs/CODING_STANDARDS.md)
-
----
-
-## Design System and Color Themes
-
-RegexLab includes 6 high-contrast, tactile themes accessible from the palette dropdown in the header:
-
-1. **Studio Obsidian** (Default): Warm matte carbon (`#0c0d10`) with hairline titanium borders and solar amber (`#f59e0b`) accents.
-2. **Studio Paper**: Warm Japanese editorial paper (`#f8f7f4`), rich charcoal (`#17181c`), and warm amber (`#d97706`).
-3. **Terracotta**: Tactile espresso (`#110e0c`) with burnt orange and terracotta (`#f97316`) highlights.
-4. **Pure Monolith**: High-contrast pure black (`#000000`) and crisp white for distraction-free focus.
-5. **Studio Sage**: Calming dark forest (`#0f1311`) with natural sage emerald (`#10b981`).
-6. **Vintage Amber CRT**: Warm retro terminal aesthetic (`#121110`) with golden phosphor amber (`#eab308`).
-
----
-
-## Testing and Quality Verification
-
-RegexLab is thoroughly verified:
-- **Build Quality**: Verified with `tsc -b && vite build` (2,598 modules transformed with 0 errors).
-- **Screenshot Verification**: Automated 1920x1080 screenshot captures across all 11 views using Puppeteer in `scripts/take-screenshots.mjs`.
-- **Zero Placeholders**: Every parser, token branch, debugger suggestion, and challenge is completely implemented.
-
----
-
-## Deployment to Vercel
-
-RegexLab is fully configured for zero-configuration deployment to Vercel with dedicated SPA rewrites and asset caching rules (`vercel.json`):
-
-### Option A: Via GitHub (Recommended)
-1. Go to [vercel.com/new](https://vercel.com/new).
-2. Select and import the `notUbaid/RegexLab` repository.
-3. Vercel automatically detects Vite as the framework.
-4. Click **Deploy**.
-
-### Option B: Via Vercel CLI
-```bash
-npm i -g vercel
-vercel
-```
-
-Production builds will automatically build using `npm run build` and output static assets to `dist/`.
-
----
-
-## Contributing
-
-Contributions are welcome. Here is how to get started:
-1. Fork the repository.
-2. Create a feature branch: `git checkout -b feat/my-new-feature`.
-3. Follow the project [Coding Standards](docs/CODING_STANDARDS.md) (no `any` types, keep code simple, readable, and beginner-friendly).
-4. Run `npm run build` to confirm compilation passes.
-5. Submit a pull request.
+Build artifacts will be emitted to `dist/`.
 
 ---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT

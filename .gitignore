@@ -4,18 +4,23 @@ logs
 npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*
-lerna-debug.log*
 
+# Dependencies
 node_modules
 dist
 dist-ssr
 *.local
+.env
+.env.*
+*.tsbuildinfo
+screenshots/
 
-# Editor directories and files
+# Editor & OS files
+.DS_Store
+Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
