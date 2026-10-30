@@ -21,6 +21,7 @@ export const TraceDebugger: React.FC<TraceDebuggerProps> = ({
   const [currentStepIdx, setCurrentStepIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const activeRowRef = useRef<HTMLTableRowElement | null>(null);
 
   // Reset step index when trace changes
   useEffect(() => {
@@ -34,6 +35,36 @@ export const TraceDebugger: React.FC<TraceDebuggerProps> = ({
       soundFX.playStepTick();
     }
   }, [currentStepIdx]);
+
+  // Smooth scroll active row into view
+  useEffect(() => {
+    if (activeRowRef.current) {
+      activeRowRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }, [currentStepIdx]);
+
+  // Keyboard stepping ([ / ] / ArrowLeft / ArrowRight)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      const isInput =
+        activeEl &&
+        (activeEl.tagName === 'INPUT' ||
+          activeEl.tagName === 'TEXTAREA' ||
+          (activeEl as HTMLElement).isContentEditable);
+      if (isInput) return;
+
+      if (e.key === '[' || e.key === 'ArrowLeft') {
+        setIsPlaying(false);
+        setCurrentStepIdx((p) => Math.max(0, p - 1));
+      } else if (e.key === ']' || e.key === 'ArrowRight') {
+        setIsPlaying(false);
+        setCurrentStepIdx((p) => Math.min(trace.length - 1, p + 1));
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [trace.length]);
 
   // Autoplay loop
   useEffect(() => {
@@ -125,6 +156,24 @@ export const TraceDebugger: React.FC<TraceDebuggerProps> = ({
           </button>
         </div>
 
+        {/* Interactive Scrub Track */}
+        {trace.length > 1 && (
+          <div className="flex-1 max-w-xs mx-4 flex items-center gap-2">
+            <input
+              type="range"
+              min={0}
+              max={trace.length - 1}
+              value={currentStepIdx}
+              onChange={(e) => {
+                setIsPlaying(false);
+                setCurrentStepIdx(Number(e.target.value));
+              }}
+              className="w-full h-1 bg-surface-elevated rounded-lg appearance-none cursor-pointer accent-foreground"
+              title="Scrub through engine execution steps"
+            />
+          </div>
+        )}
+
         <div className="flex items-center gap-3 text-[11px] text-foreground-dim">
           <span>
             Step <strong className="text-foreground">{trace.length ? currentStepIdx + 1 : 0}</strong> of {trace.length}
@@ -182,6 +231,7 @@ export const TraceDebugger: React.FC<TraceDebuggerProps> = ({
               return (
                 <tr
                   key={idx}
+                  ref={isCurrent ? activeRowRef : null}
                   onClick={() => {
                     setIsPlaying(false);
                     setCurrentStepIdx(idx);

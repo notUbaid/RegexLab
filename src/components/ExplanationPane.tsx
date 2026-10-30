@@ -1,5 +1,6 @@
 import React from 'react';
 import { ExplanationBlock } from '../engine/types';
+import { soundFX } from '../utils/soundEffects';
 
 interface ExplanationPaneProps {
   explanation: ExplanationBlock[];
@@ -36,8 +37,15 @@ export const ExplanationPane: React.FC<ExplanationPaneProps> = ({
           return (
             <div
               key={block.id}
-              onMouseEnter={() => onHoverToken(block.tokenIds[0] || block.id)}
+              onMouseEnter={() => {
+                soundFX.playHoverPlink(1.05);
+                onHoverToken(block.tokenIds[0] || block.id);
+              }}
               onMouseLeave={() => onHoverToken(null)}
+              onClick={() => {
+                soundFX.playLatch();
+                onHoverToken(isHovered ? null : block.tokenIds[0] || block.id);
+              }}
               className={`p-2 rounded border transition-colors cursor-pointer ${
                 isHovered
                   ? 'bg-amber-400/15 border-amber-400/40 text-foreground'

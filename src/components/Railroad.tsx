@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { RegexToken } from '../engine/types';
+import { soundFX } from '../utils/soundEffects';
 
 interface RailroadProps {
   tokens: RegexToken[];
@@ -94,11 +95,12 @@ export const Railroad: React.FC<RailroadProps> = ({
           </text>
 
           {/* Nodes */}
-          {layout.items.map(({ token, x, y, w, h }) => {
+          {layout.items.map(({ token, x, y, w, h }, idx) => {
             const isHovered = hoveredTokenId === token.id;
             const isGroup = token.category === 'group';
             const isQuant = token.category === 'quantifier';
             const isAnchor = token.category === 'anchor';
+            const pitchMult = 0.85 + (idx / Math.max(1, layout.items.length - 1)) * 0.7;
 
             let fillClass = 'fill-surface-elevated stroke-border';
             let textClass = 'fill-foreground';
@@ -120,8 +122,15 @@ export const Railroad: React.FC<RailroadProps> = ({
             return (
               <g
                 key={token.id}
-                onMouseEnter={() => onHoverToken(token.id)}
+                onMouseEnter={() => {
+                  soundFX.playHoverPlink(pitchMult);
+                  onHoverToken(token.id);
+                }}
                 onMouseLeave={() => onHoverToken(null)}
+                onClick={() => {
+                  soundFX.playLatch();
+                  onHoverToken(token.id === hoveredTokenId ? null : token.id);
+                }}
                 className="cursor-pointer transition-all"
               >
                 <rect

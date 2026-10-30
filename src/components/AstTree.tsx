@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AstNode } from '../engine/types';
+import { soundFX } from '../utils/soundEffects';
 
 interface AstTreeProps {
   ast: AstNode;
@@ -47,9 +48,17 @@ const AstNodeRow: React.FC<AstNodeRowProps> = ({
   return (
     <div className="font-mono text-xs select-none">
       <div
-        onMouseEnter={() => onHoverToken(node.id)}
+        onMouseEnter={() => {
+          soundFX.playHoverPlink(1.0 + depth * 0.12);
+          onHoverToken(node.id);
+        }}
         onMouseLeave={() => onHoverToken(null)}
-        onClick={() => hasChildren && setCollapsed(!collapsed)}
+        onClick={() => {
+          if (hasChildren) {
+            soundFX.playLatch();
+            setCollapsed(!collapsed);
+          }
+        }}
         className={`flex items-center gap-2 py-1 px-2 rounded cursor-pointer transition-colors ${
           isHovered
             ? 'bg-amber-400/15 text-amber-300'

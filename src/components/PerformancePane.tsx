@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ComplexityAnalysis } from '../engine/types';
 import { ShieldCheck, AlertTriangle, AlertOctagon, CheckCircle2, Play } from 'lucide-react';
+import { soundFX } from '../utils/soundEffects';
 
 interface PerformancePaneProps {
   complexity: ComplexityAnalysis;
@@ -17,6 +18,7 @@ export const PerformancePane: React.FC<PerformancePaneProps> = ({
   const [stressResults, setStressResults] = useState<{ len: number; timeMs: number }[] | null>(null);
 
   const runAdversarialTest = () => {
+    soundFX.playSwitch(true);
     setStressTesting(true);
     setStressResults(null);
 
@@ -39,6 +41,13 @@ export const PerformancePane: React.FC<PerformancePaneProps> = ({
 
       setStressResults(results);
       setStressTesting(false);
+
+      const hasSlow = results.some((r) => r.timeMs > 50);
+      if (hasSlow || complexity.riskLevel === 'critical') {
+        soundFX.playWarning();
+      } else {
+        soundFX.playSuccess();
+      }
     }, 50);
   };
 
@@ -126,7 +135,10 @@ export const PerformancePane: React.FC<PerformancePaneProps> = ({
                 {complexity.safeAlternative}
               </code>
               <button
-                onClick={() => onApplyAlternative(complexity.safeAlternative!)}
+                onClick={() => {
+                  soundFX.playSuccess();
+                  onApplyAlternative(complexity.safeAlternative!);
+                }}
                 className="px-2 py-0.5 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-[11px] transition-colors"
               >
                 Apply Fix

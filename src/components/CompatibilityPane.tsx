@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { EngineCompatibility } from '../engine/types';
 import { Copy, Check } from 'lucide-react';
+import { soundFX } from '../utils/soundEffects';
 
 interface CompatibilityPaneProps {
   compatibility: EngineCompatibility[];
@@ -12,6 +13,7 @@ export const CompatibilityPane: React.FC<CompatibilityPaneProps> = ({
   const [copiedEngine, setCopiedEngine] = useState<string | null>(null);
 
   const handleCopy = (engine: string, snippet: string) => {
+    soundFX.playCopy();
     navigator.clipboard.writeText(snippet);
     setCopiedEngine(engine);
     setTimeout(() => setCopiedEngine(null), 1500);
@@ -38,7 +40,11 @@ export const CompatibilityPane: React.FC<CompatibilityPaneProps> = ({
             {compatibility.map((item) => {
               const isCopied = copiedEngine === item.engine;
               return (
-                <tr key={item.engine} className="hover:bg-surface-subtle/50 transition-colors">
+                <tr
+                  key={item.engine}
+                  onMouseEnter={() => soundFX.playHoverPlink(1.1)}
+                  className="hover:bg-surface-subtle/50 transition-colors"
+                >
                   <td className="py-2 px-3 text-foreground font-semibold">
                     {item.name}
                     <span className="block text-[9px] text-foreground-dim font-normal">
