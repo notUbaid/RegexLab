@@ -16,8 +16,7 @@ export function analyzeComplexity(pattern: string): ComplexityAnalysis {
   let riskScore = 10;
   let timeComplexity = 'O(N)';
 
-  // Heuristic 1: Nested Quantifiers (e.g., (a+)+, (.*)*, ([0-9]+)+)
-  // This causes catastrophic backtracking exponential O(2^N)
+  // Check 1: Nested loops like (a+)+ or (.*)* that cause catastrophic backtracking
   const nestedQuantifierRegex = /(\([^\)]*[\+\*][^\)]*\))[\+\*]/g;
   let match: RegExpExecArray | null;
   while ((match = nestedQuantifierRegex.exec(pattern)) !== null) {
@@ -25,14 +24,14 @@ export function analyzeComplexity(pattern: string): ComplexityAnalysis {
     riskScore += 45;
   }
 
-  // Heuristic 2: Overlapping Alternations inside Repetition (e.g., (a|a)+ or (a|ab)+)
+  // Check 2: Overlapping choices inside loops like (a|a)+ or (a|ab)+
   const overlappingAlternationRegex = /\(([a-zA-Z0-9_\\]+)\|(\1[a-zA-Z0-9_\\]*)\)[\+\*]/g;
   while ((match = overlappingAlternationRegex.exec(pattern)) !== null) {
     vulnerableSubpatterns.push(match[0]);
     riskScore += 35;
   }
 
-  // Heuristic 3: Adjacent Greedy Wildcards (e.g., .*.* or \d+.*\d+)
+  // Check 3: Multiple greedy wildcards like .*.*
   const adjacentWildcardsRegex = /\.\*[\s\S]*?\.\*/g;
   if (adjacentWildcardsRegex.test(pattern)) {
     vulnerableSubpatterns.push('.*.*');

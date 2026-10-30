@@ -203,7 +203,7 @@ export const Workspace: React.FC = () => {
     handleShare,
   ]);
 
-  // 2. UNIFIED ENGINE PARSE PASS: Single pure analysis computation
+  // Run analysis whenever pattern, flags, or test text changes
   const analysis = useMemo(() => {
     return analyzeRegex(pattern, flags, testText);
   }, [pattern, flags, testText]);
@@ -246,7 +246,7 @@ export const Workspace: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen w-screen bg-background text-foreground overflow-hidden font-sans select-none">
-      {/* 1. Top Bar */}
+      {/* Top Bar */}
       <TopBar
         onOpenLibrary={() => setLibraryOpen(true)}
         onOpenChallenges={() => setChallengesOpen(true)}
@@ -268,7 +268,7 @@ export const Workspace: React.FC = () => {
         shareCopied={shareCopied}
       />
 
-      {/* 2. Full-Width Pattern Input & Telemetry Strip */}
+      {/* Pattern input and flags */}
       <PatternInput
         pattern={pattern}
         flags={flags}
@@ -283,18 +283,18 @@ export const Workspace: React.FC = () => {
         }}
       />
 
-      {/* 3. Middle Work Area: Token Palette Drawer + Middle Split */}
+      {/* Main editor and results split */}
       <div className="flex-1 min-h-0 flex overflow-hidden">
-        {/* Collapsible Left Drawer: Token Palette */}
+        {/* Token palette drawer */}
         <TokenPalette
           isOpen={paletteOpen}
           onClose={() => setPaletteOpen(false)}
           onInsertToken={handleInsertToken}
         />
 
-        {/* Middle Split: Test Editor (Left) & Match Details / Replace / Compare (Right) */}
+        {/* Test editor and match table */}
         <main className="flex-1 min-h-0 min-w-0 flex flex-col md:flex-row overflow-hidden">
-          {/* Left Split: Test String Editor */}
+          {/* Test string editor */}
           <div className="flex-1 min-h-0 min-w-0 h-full">
             <TestEditor
               testText={testText}
@@ -306,7 +306,7 @@ export const Workspace: React.FC = () => {
             />
           </div>
 
-          {/* Right Split: Match Inspector, Capture Groups, Replace & Compare */}
+          {/* Match results and replace */}
           <div className="w-full md:w-[380px] lg:w-[440px] border-t md:border-t-0 md:border-l border-border h-full flex flex-col shrink-0">
             <MatchTable
               analysis={analysis}
@@ -324,7 +324,7 @@ export const Workspace: React.FC = () => {
         </main>
       </div>
 
-      {/* 4. Bottom Inspector Drawer */}
+      {/* Bottom inspector tabs */}
       <Inspector
         activeTab={activeTab}
         onSelectTab={setActiveTab}
@@ -339,7 +339,7 @@ export const Workspace: React.FC = () => {
         onApplyFix={handleApplyFix}
       />
 
-      {/* 5. Precision Developer Status Bar */}
+      {/* Bottom status bar */}
       <footer className="h-6 px-3 bg-surface-subtle border-t border-border flex items-center justify-between text-[10px] font-mono text-foreground-dim select-none shrink-0 z-10">
         <div className="flex items-center gap-3">
           <button
@@ -394,7 +394,7 @@ export const Workspace: React.FC = () => {
 
         <div className="flex items-center gap-3">
           <span className="text-foreground-muted/80">
-            AST Engine: <strong className="text-foreground font-semibold">Recursive Descent</strong>
+            Engine: <strong className="text-foreground font-semibold">Client-side Parser</strong>
           </span>
           <span className="text-border">·</span>
           <span className="text-foreground-muted/80">

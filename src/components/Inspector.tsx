@@ -65,7 +65,7 @@ export const Inspector: React.FC<InspectorProps> = ({
     <div
       className={`border-t border-border bg-surface flex flex-col shrink-0 select-none transition-all duration-200 ${heightClass}`}
     >
-      {/* Tab Bar Header (Text-only tabs, no icon soup) */}
+      {/* Tab bar header */}
       <div className="h-9 px-3 border-b border-border bg-surface-subtle flex items-center justify-between text-xs">
         <div className="flex items-center gap-0.5">
           {TABS.map((t) => {

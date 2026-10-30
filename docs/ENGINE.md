@@ -1,74 +1,79 @@
-# RegexLab Engine Architecture
+# How the RegexLab Engine Works (My Notes)
 
-RegexLab parses and simulates regular expressions entirely in the browser using a unified, pure compiler pipeline:
+I wrote this small engine in TypeScript so that the app could run completely in the browser without relying on any external backend or server.
+
+Here is a quick breakdown of what happens when you type a regex pattern like `a(b|c)*`:
 
 ```
-Pattern String -> Tokens (Lexer) -> AST (Parser) -> NFA Simulator & Analyzer
+User Input -> Lexer (Tokens) -> Parser (AST) -> Matcher & Trace (Execution Steps)
 ```
 
 ---
 
-## Worked Example: `a(b|c)*`
+## 1. Lexer (`src/engine/lexer.ts`)
 
-To see how the engine processes an expression, trace the pattern `a(b|c)*`:
+The lexer scans the raw regex string character by character. Its job is to figure out what each character means (is it a literal letter? a parenthesis opening a group? a `*` quantifier? or an escaped character like `\d`?).
 
-### 1. Lexical Analysis (`src/engine/lexer.ts`)
-The scanner reads character-by-character, resolving escaped sequences and operators:
+For `a(b|c)*`, it breaks it down into these tokens:
 
-| Offset | Raw | Type | Semantic Meaning |
-| :--- | :--- | :--- | :--- |
-| `0..1` | `a` | `literal` | Matches character literal 'a' |
-| `1..2` | `(` | `group_open` | Starts capturing group #1 |
-| `2..3` | `b` | `literal` | Matches character literal 'b' |
-| `3..4` | `\|` | `alternation` | Choice branch (left or right) |
-| `4..5` | `c` | `literal` | Matches character literal 'c' |
-| `5..6` | `)` | `group_close` | Closes capturing group #1 |
-| `6..7` | `*` | `quantifier` | Zero or more repetitions (`min: 0, max: Infinity, greedy: true`) |
+- `'a'` -> Literal character
+- `'('` -> Group start
+- `'b'` -> Literal character
+- `'|'` -> Alternation ("OR")
+- `'c'` -> Literal character
+- `')'` -> Group end
+- `'*'` -> Quantifier (0 or more times)
 
-Each token retains source slice positions `[start, end]` for bidirectional cursor and hover synchronization in the UI.
+I also store the `start` and `end` index of each token so that when you hover over a token in the UI, I can highlight the exact characters!
 
-### 2. Abstract Syntax Tree (`src/engine/parser.ts`)
-A recursive-descent parser constructs the operator hierarchy:
+---
 
+## 2. Parser (`src/engine/parser.ts`)
+
+The parser takes those tokens and turns them into a tree (an Abstract Syntax Tree, or AST). 
+
+This helps figure out what belongs inside what. For example:
+- The `*` quantifier applies to the group `(b|c)`
+- Inside that group, there's a choice between `b` OR `c`
+- And the whole thing comes after the literal `'a'`
+
+The tree looks roughly like this:
 ```
-Expression
+Regex
 ├── Literal ("a")
-└── Quantifier ("*", greedy: true)
-    └── Group (Capture #1)
-        └── Disjunction ("|")
+└── Quantifier ("*")
+    └── Group 1
+        └── Choice
             ├── Literal ("b")
             └── Literal ("c")
 ```
 
-### 3. Non-Deterministic Finite Automaton (`src/engine/matcher.ts`)
-Thompson's construction converts the AST into an NFA state graph with epsilon ($\epsilon$) transitions:
-
-```
-[State 0 (Start)] ──'a'──> [State 1] ──ε──> [State 2 (Loop Entry)]
-                                 ▲                     │
-                                 │                 ┌───┴───┐
-                                 │                'b'     'c'
-                                 │                 │       │
-                                 │                 └───┬───┘
-                                 │                     ▼
-                                 └──────── ε ─────── [State 3] ──ε──> [State 4 (Accept)]
-```
-
-When matching against text like `"ab"`:
-1. `State 0`: consumes `'a'` at index `0`. Transition to `State 1`.
-2. `State 1`: follows $\epsilon$-transition into the group loop (`State 2`).
-3. `State 2`: tries left branch `'b'`. Matches index `1`. Transition to `State 3`.
-4. `State 3`: greedily loops back to `State 2` to test for more characters.
-5. End of string reached: engine backtracks to `State 3` and exits through $\epsilon$-transition to `State 4` (Accept). Match confirmed.
+I use this tree to render the **AST Explorer** tab and to generate the nodes for the **Railroad Diagram**.
 
 ---
 
-## Single Pure Analysis Pass (`src/engine/analyze.ts`)
+## 3. Matcher & Step Debugger (`src/engine/matcher.ts`)
 
-Instead of re-parsing the regex on every UI component mount, RegexLab executes a single memoized call:
+To match the pattern against the test string, the matcher:
+1. Runs the native browser RegExp to get accurate match positions and capture groups (`$1`, `$2`, etc.).
+2. Simulates the step-by-step state machine so the debugger can show you exactly what happened:
+   - When it tests `'a'` against the first character
+   - When it enters the loop
+   - When it tries branch `'b'`, or backtracks and tries `'c'`
+   - When it successfully matches or fails
 
-```ts
-const analysis = analyzeRegex(pattern, flags, testText);
-```
+Each step records the current character, what action was taken (`match`, `branch`, `backtrack`, or `fail`), and an explanation so you can step through with the slider.
 
-This returns `{ ast, tokens, matches, trace, complexity, compatibility, explanation, error }` in one pure, unmutated pass, keeping the workspace synchronized at 60 FPS.
+---
+
+## 4. ReDoS & Performance Check (`src/engine/complexity.ts`)
+
+Regex Denial of Service (ReDoS) happens when an expression has nested quantifiers like `(a+)+$` or `(a|b|ab)*$`. If you give it a string like `aaaaaaaaaaaa!`, the engine has to try millions of branch combinations, which freezes the browser.
+
+I wrote a simple scanner that checks for these risky patterns and runs a quick benchmark with strings of lengths 10, 15, 20, and 25 to see if the time explodes exponentially.
+
+---
+
+## 5. Single Pass (`src/engine/analyze.ts`)
+
+Instead of parsing the regex separately inside every component, `Workspace.tsx` calls `analyzeRegex(pattern, flags, testText)` in one place with `useMemo`. All tabs (Visualizer, AST, Debugger, Performance, etc.) just read from this one analysis result so the UI stays super smooth!

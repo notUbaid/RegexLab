@@ -1,12 +1,6 @@
-/**
- * ============================================================================
- * RegexLab - Advanced Procedural Mechanical & Haptic Synthesizer
- * ============================================================================
- * 
- * Generates physical mechanical keyboard acoustics, switch actuations,
- * magnetic latch clicks, and polyphonic chimes in real-time using the
- * Web Audio API with zero external audio assets.
- */
+// Sound synthesizer for RegexLab
+// Generates keyboard switch clicks and UI sounds with the Web Audio API
+// No audio files needed!
 
 export type SoundProfile = 'thock' | 'clicky' | 'tactile' | 'buckling' | 'cyber';
 

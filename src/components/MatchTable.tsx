@@ -70,7 +70,7 @@ export const MatchTable: React.FC<MatchTableProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-surface select-none">
-      {/* Tab Switcher Toolbar with tactile switch sound */}
+      {/* Tab Switcher Toolbar */}
       <div className="h-9 px-3 border-b border-border bg-surface-subtle flex items-center justify-between text-xs">
         <div className="flex items-center gap-1">
           <button

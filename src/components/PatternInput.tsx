@@ -150,7 +150,7 @@ export const PatternInput: React.FC<PatternInputProps> = ({
         </div>
       )}
 
-      {/* Inline Telemetry Bar & Token Chips */}
+      {/* Tokens preview and quick status */}
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs select-none">
         {/* Token Chips */}
         <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-0.5">
@@ -182,7 +182,7 @@ export const PatternInput: React.FC<PatternInputProps> = ({
           )}
         </div>
 
-        {/* Telemetry Strip */}
+        {/* Quick status links */}
         <div className="flex items-center gap-2 font-mono text-[11px] text-foreground-dim">
           <button
             onClick={() => {

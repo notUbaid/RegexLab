@@ -36,16 +36,16 @@ export function analyzeRegex(pattern: string, flags: string, testText: string): 
     syntaxError = err instanceof Error ? err.message : String(err);
   }
 
-  // 2. Lexical & AST pipeline
+  // 2. Turn pattern into tokens and AST
   const tokens = tokenize(pattern);
   const ast = parseAst(tokens, pattern);
 
-  // 3. Execution & matching
+  // 3. Find matches
   const { matches, timeMs } = isValid
     ? executeMatches(pattern, flags, testText)
     : { matches: [], timeMs: 0 };
 
-  // 4. Trace, Complexity, Compatibility, and Explanation
+  // 4. Debugger trace, complexity check, and explanation
   const trace = isValid ? simulateTrace(tokens, testText) : [];
   const complexity = analyzeComplexity(pattern);
   const compatibility = checkCompatibility(pattern, flags);
