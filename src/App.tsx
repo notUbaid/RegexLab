@@ -1,8 +1,5 @@
-import React from 'react';
 import { Workspace } from './components/Workspace';
 
-export const App: React.FC = () => {
+export default function App() {
   return <Workspace />;
-};
-
-export default App;
+}

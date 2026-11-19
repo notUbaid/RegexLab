@@ -2,7 +2,7 @@
   "name": "regexlab",
   "private": true,
   "version": "1.0.0",
-  "description": "Fast, client-side regular expression IDE and interactive execution visualizer",
+  "description": "Regex tester that highlights matches and explains each part of the pattern",
   "repository": {
     "type": "git",
     "url": "https://github.com/notUbaid/RegexLab.git"
@@ -13,22 +13,18 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --test src/engine/engine.test.ts"
+  },
+  "engines": {
+    "node": ">=22.18"
   },
   "dependencies": {
-    "@types/d3": "^7.4.3",
-    "canvas-confetti": "^1.9.4",
-    "clsx": "^2.1.1",
-    "d3": "^7.9.0",
-    "framer-motion": "^12.4.7",
     "lucide-react": "^0.475.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "tailwind-merge": "^3.0.1",
-    "zustand": "^5.0.3"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^22.13.4",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",

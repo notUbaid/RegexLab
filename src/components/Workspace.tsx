@@ -1,431 +1,163 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { TopBar } from './TopBar';
+// The main (and only) screen. It owns all the state, runs the regex analysis once per change,
+// and hands the result to the panels below. The panels themselves hold almost no state.
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { analyze } from '../engine/analyze';
+import { useCopy } from '../useCopy';
+import { Header } from './Header';
 import { PatternInput } from './PatternInput';
 import { TestEditor } from './TestEditor';
-import { MatchTable } from './MatchTable';
-import { TokenPalette } from './TokenPalette';
-import { Inspector, InspectorTab } from './Inspector';
+import { ResultsPanel } from './ResultsPanel';
+import { ExplanationPanel } from './ExplanationPanel';
+import { ExamplesModal } from './ExamplesModal';
 import { CheatsheetModal } from './CheatsheetModal';
-import { LibraryModal } from './LibraryModal';
-import { ChallengesModal } from './ChallengesModal';
-import { analyzeRegex } from '../engine/analyze';
-import { soundFX, SoundProfile } from '../utils/soundEffects';
+import { PracticeModal } from './PracticeModal';
 
-const DEFAULT_PATTERN = 'v?(\\d+)\\.(\\d+)\\.(\\d+)(?:-([0-9A-Za-z.-]+))?';
-const DEFAULT_FLAGS = 'gm';
-const DEFAULT_TEST_TEXT = `v1.2.3
-v2.0.0-beta.1
-1.0.4-rc.2
-release-v0.9.0-alpha
-v3.14.159-preview.5
-invalid-version-here
-v4.0.0
-2.1.0-rc1`;
+const DEFAULT_PATTERN = '(\\d{4})-(\\d{2})-(\\d{2})';
+const DEFAULT_FLAGS = 'g';
+const DEFAULT_TEXT = `Invoice sent on 2026-03-14 and paid on 2026-04-02.
+Next review is booked for 2026-12-01.
+This line has no date, so nothing here is highlighted.`;
 
-export const Workspace: React.FC = () => {
-  // Read initial values from the URL query params so shared links load immediately.
-  // If no params are in the URL, we fall back to our friendly defaults.
-  const getInitialState = () => {
-    try {
-      let queryString = window.location.search;
-      if (!queryString && window.location.hash.startsWith('#?')) {
-        queryString = window.location.hash.slice(1);
-      }
+// The flags the UI can toggle. Anything else in a shared link is dropped.
+const SUPPORTED_FLAGS = 'gims';
 
-      const params = new URLSearchParams(queryString);
-      const patternParam = params.get('p');
-      const flagsParam = params.get('f');
-      const textParam = params.get('t');
-      const tabParam = params.get('tab') as InspectorTab | null;
+// A shared link carries the pattern, flags and text in the URL: ?p=...&f=...&t=...
+function readSharedLink() {
+  const params = new URLSearchParams(window.location.search);
 
-      const pattern = patternParam !== null ? decodeURIComponent(patternParam) : DEFAULT_PATTERN;
-      const flags = flagsParam !== null ? decodeURIComponent(flagsParam) : DEFAULT_FLAGS;
-      const testText = textParam !== null ? decodeURIComponent(textParam) : DEFAULT_TEST_TEXT;
-      const activeTab = tabParam || 'visualizer';
+  // Keep each supported flag once, so a hand-edited link like ?f=ggx becomes "g".
+  let flags = '';
+  for (const flag of params.get('f') ?? DEFAULT_FLAGS) {
+    if (SUPPORTED_FLAGS.includes(flag) && !flags.includes(flag)) flags += flag;
+  }
 
-      return { pattern, flags, testText, activeTab };
-    } catch {
-      return {
-        pattern: DEFAULT_PATTERN,
-        flags: DEFAULT_FLAGS,
-        testText: DEFAULT_TEST_TEXT,
-        activeTab: 'visualizer' as InspectorTab,
-      };
-    }
+  return {
+    pattern: params.get('p') ?? DEFAULT_PATTERN,
+    flags,
+    text: params.get('t') ?? DEFAULT_TEXT,
   };
+}
 
-  const initial = getInitialState();
+function loadTheme(): string {
+  try {
+    const saved = localStorage.getItem('regexlab-theme');
+    if (saved === 'light' || saved === 'dark') return saved;
+  } catch {
+    // Storage can be blocked (e.g. some private windows). Fall back to the system setting.
+  }
+  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
 
-  const [pattern, setPattern] = useState<string>(initial.pattern);
-  const [flags, setFlags] = useState<string>(initial.flags);
-  const [testText, setTestText] = useState<string>(initial.testText);
-  const [activeTab, setActiveTab] = useState<InspectorTab>(initial.activeTab);
-  const [isInspectorCollapsed, setIsInspectorCollapsed] = useState<boolean>(false);
+type HelperWindow = 'examples' | 'cheatsheet' | 'practice' | null;
 
-  // Compare mode pattern & flags
-  const [comparePattern, setComparePattern] = useState<string>('v?\\d+\\.\\d+\\.\\d+');
-  const [compareFlags, setCompareFlags] = useState<string>('g');
-  const [replacementText, setReplacementText] = useState<string>('[$&]');
+export function Workspace() {
+  const [initial] = useState(readSharedLink); // read the URL once, on the first render
+  const [pattern, setPattern] = useState(initial.pattern);
+  const [flags, setFlags] = useState(initial.flags);
+  const [text, setText] = useState(initial.text);
+  const [openWindow, setOpenWindow] = useState<HelperWindow>(null);
+  const [activeGroup, setActiveGroup] = useState<number | null>(null);
+  const [theme, setTheme] = useState(loadTheme);
+  const patternInputRef = useRef<HTMLInputElement>(null);
+  const share = useCopy();
 
-  // UI Drawer & Modal States
-  const [paletteOpen, setPaletteOpen] = useState<boolean>(false);
-  const [libraryOpen, setLibraryOpen] = useState<boolean>(false);
-  const [challengesOpen, setChallengesOpen] = useState<boolean>(false);
-  const [cheatsheetOpen, setCheatsheetOpen] = useState<boolean>(false);
-  const [shareCopied, setShareCopied] = useState<boolean>(false);
+  // Everything the panels show comes from this one call.
+  const analysis = useMemo(() => analyze(pattern, flags, text), [pattern, flags, text]);
 
-  // Hover synchronization state
-  const [hoveredTokenId, setHoveredTokenId] = useState<string | null>(null);
-  const [hoveredGroupIndex, setHoveredGroupIndex] = useState<number | null>(null);
-
-  // Theme & Sound
-  const [theme, setTheme] = useState<string>(() => {
-    return localStorage.getItem('regexlab_theme') || 'dark';
-  });
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
-    return localStorage.getItem('regexlab_sound') !== 'false';
-  });
-  const [soundProfile, setSoundProfile] = useState<SoundProfile>(() => {
-    return soundFX.getProfile();
-  });
-
-  // Apply theme to document element
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('regexlab_theme', theme);
+    document.documentElement.dataset.theme = theme;
   }, [theme]);
 
-  // Sync URL query params
-  useEffect(() => {
+  // Saved only when the user picks a theme, so until then the app keeps following the system setting.
+  function toggleTheme() {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
     try {
-      const params = new URLSearchParams();
-      if (pattern !== DEFAULT_PATTERN) params.set('p', encodeURIComponent(pattern));
-      if (flags !== DEFAULT_FLAGS) params.set('f', encodeURIComponent(flags));
-      if (activeTab !== 'visualizer') params.set('tab', activeTab);
-      
-      const queryStr = params.toString();
-      const newUrl = queryStr ? `${window.location.pathname}?${queryStr}` : window.location.pathname;
-      window.history.replaceState(null, '', newUrl);
+      localStorage.setItem('regexlab-theme', next);
     } catch {
-      // ignore
+      // Not saving the theme is fine.
     }
-  }, [pattern, flags, activeTab]);
+  }
 
-  // Share URL handler
-  const handleShare = useCallback(() => {
-    soundFX.playCopy();
-    const params = new URLSearchParams();
-    params.set('p', encodeURIComponent(pattern));
-    params.set('f', encodeURIComponent(flags));
-    params.set('t', encodeURIComponent(testText));
-    params.set('tab', activeTab);
-    const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+  function toggleFlag(flag: string) {
+    setFlags((current) => (current.includes(flag) ? current.replace(flag, '') : current + flag));
+  }
 
-    navigator.clipboard.writeText(shareUrl);
-    setShareCopied(true);
-    setTimeout(() => setShareCopied(false), 2000);
-  }, [pattern, flags, testText, activeTab]);
+  // Inserts a cheatsheet token where the cursor was in the pattern box, not just at the end.
+  function insertIntoPattern(snippet: string) {
+    const input = patternInputRef.current;
+    const from = input?.selectionStart ?? pattern.length;
+    const to = input?.selectionEnd ?? pattern.length;
+    setPattern(pattern.slice(0, from) + snippet + pattern.slice(to));
+    setOpenWindow(null);
+    // Wait for React to update the input, then put the cursor after the inserted text.
+    requestAnimationFrame(() => {
+      input?.focus();
+      input?.setSelectionRange(from + snippet.length, from + snippet.length);
+    });
+  }
 
-  // Global keyboard shortcuts: developer ergonomics
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const activeEl = document.activeElement;
-      const isInputFocused =
-        activeEl &&
-        (activeEl.tagName === 'INPUT' ||
-          activeEl.tagName === 'TEXTAREA' ||
-          (activeEl as HTMLElement).isContentEditable);
-
-      // Ctrl+K or Cmd+K: Cheatsheet
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        soundFX.playLatch();
-        setCheatsheetOpen((prev) => !prev);
-      }
-      // Ctrl+S or Cmd+S: Share link
-      else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
-        e.preventDefault();
-        handleShare();
-      }
-      // Ctrl+B or Cmd+B: Toggle Token Palette
-      else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
-        e.preventDefault();
-        soundFX.playLatch();
-        setPaletteOpen((prev) => !prev);
-      }
-      // Ctrl+P or Cmd+P: Open Presets Library
-      else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
-        e.preventDefault();
-        soundFX.playLatch();
-        setLibraryOpen((prev) => !prev);
-      }
-      // '?' (when not typing in an input): Open Cheatsheet
-      else if (!isInputFocused && e.key === '?') {
-        e.preventDefault();
-        soundFX.playLatch();
-        setCheatsheetOpen(true);
-      }
-      // Alt+1 through Alt+6: Switch bottom inspector tabs
-      else if (e.altKey && ['1', '2', '3', '4', '5', '6'].includes(e.key)) {
-        e.preventDefault();
-        const tabMap: Record<string, InspectorTab> = {
-          '1': 'visualizer',
-          '2': 'ast',
-          '3': 'debugger',
-          '4': 'performance',
-          '5': 'compatibility',
-          '6': 'explanation',
-        };
-        const targetTab = tabMap[e.key];
-        if (targetTab) {
-          soundFX.playTab();
-          setActiveTab(targetTab);
-          setIsInspectorCollapsed(false);
-        }
-      }
-      // Esc: Close any open modal or drawer
-      else if (e.key === 'Escape') {
-        if (cheatsheetOpen || libraryOpen || challengesOpen || paletteOpen) {
-          soundFX.playLatch();
-          setCheatsheetOpen(false);
-          setLibraryOpen(false);
-          setChallengesOpen(false);
-          setPaletteOpen(false);
-        }
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [
-    pattern,
-    flags,
-    testText,
-    activeTab,
-    cheatsheetOpen,
-    libraryOpen,
-    challengesOpen,
-    paletteOpen,
-    handleShare,
-  ]);
-
-  // Run analysis whenever pattern, flags, or test text changes
-  const analysis = useMemo(() => {
-    return analyzeRegex(pattern, flags, testText);
-  }, [pattern, flags, testText]);
-
-  // Apply sound toggle to soundFX
-  useEffect(() => {
-    soundFX.setEnabled(soundEnabled);
-  }, [soundEnabled]);
-
-  // Flag toggle handler
-  const handleToggleFlag = useCallback((f: string) => {
-    setFlags((prev) => (prev.includes(f) ? prev.replace(f, '') : prev + f));
-  }, []);
-
-  // Pattern change handler
-  const handlePatternChange = useCallback((newPattern: string) => {
+  function loadIntoEditor(newPattern: string, newFlags: string, newText: string) {
     setPattern(newPattern);
-  }, []);
+    setFlags(newFlags);
+    setText(newText);
+    setOpenWindow(null);
+  }
 
-  // Token insertion from palette or cheatsheet
-  const handleInsertToken = useCallback((tokenSnippet: string) => {
-    soundFX.playKeypress();
-    setPattern((prev) => prev + tokenSnippet);
-  }, []);
-
-  // 1-Click fix applicator from trace debugger
-  const handleApplyFix = useCallback((fixedPattern: string, fixedFlags: string) => {
-    soundFX.playSuccess();
-    setPattern(fixedPattern);
-    setFlags(fixedFlags);
-  }, []);
-
-  // Load from preset library
-  const handleSelectPreset = useCallback((presetPattern: string, presetFlags: string, sampleText: string) => {
-    soundFX.playSuccess();
-    setPattern(presetPattern);
-    setFlags(presetFlags || 'g');
-    if (sampleText) setTestText(sampleText);
-  }, []);
+  function copyShareLink() {
+    const params = new URLSearchParams({ p: pattern, f: flags, t: text });
+    share.copy(`${window.location.origin}${window.location.pathname}?${params}`);
+  }
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-background text-foreground overflow-hidden font-sans select-none">
-      {/* Top Bar */}
-      <TopBar
-        onOpenLibrary={() => setLibraryOpen(true)}
-        onOpenChallenges={() => setChallengesOpen(true)}
-        onOpenCheatsheet={() => setCheatsheetOpen(true)}
-        onShare={handleShare}
-        paletteOpen={paletteOpen}
-        onTogglePalette={() => setPaletteOpen(!paletteOpen)}
+    <div className="flex min-h-screen flex-col bg-background text-foreground md:h-screen md:overflow-hidden">
+      <Header
+        onOpenExamples={() => setOpenWindow('examples')}
+        onOpenCheatsheet={() => setOpenWindow('cheatsheet')}
+        onOpenPractice={() => setOpenWindow('practice')}
         theme={theme}
-        onSelectTheme={setTheme}
-        soundEnabled={soundEnabled}
-        onToggleSound={() => {
-          setSoundEnabled(!soundEnabled);
-        }}
-        soundProfile={soundProfile}
-        onSelectSoundProfile={(p) => {
-          soundFX.setProfile(p);
-          setSoundProfile(p);
-        }}
-        shareCopied={shareCopied}
+        onToggleTheme={toggleTheme}
+        onShare={copyShareLink}
+        shareStatus={share.status}
       />
 
-      {/* Pattern input and flags */}
       <PatternInput
+        inputRef={patternInputRef}
         pattern={pattern}
         flags={flags}
-        onPatternChange={handlePatternChange}
-        onToggleFlag={handleToggleFlag}
-        analysis={analysis}
-        hoveredTokenId={hoveredTokenId}
-        onHoverToken={setHoveredTokenId}
-        onSelectTab={(tab) => {
-          setActiveTab(tab as InspectorTab);
-          setIsInspectorCollapsed(false);
-        }}
+        onPatternChange={setPattern}
+        onToggleFlag={toggleFlag}
+        error={analysis.error}
+        warning={analysis.warning}
       />
 
-      {/* Main editor and results split */}
-      <div className="flex-1 min-h-0 flex overflow-hidden">
-        {/* Token palette drawer */}
-        <TokenPalette
-          isOpen={paletteOpen}
-          onClose={() => setPaletteOpen(false)}
-          onInsertToken={handleInsertToken}
-        />
+      <main className="flex flex-1 flex-col md:min-h-0 md:flex-row">
+        <div className="h-80 md:h-auto md:min-w-0 md:flex-1">
+          <TestEditor text={text} onTextChange={setText} matches={analysis.matches} activeGroup={activeGroup} />
+        </div>
+        <div className="h-96 border-t border-border md:h-auto md:w-[380px] md:border-l md:border-t-0 lg:w-[420px]">
+          <ResultsPanel
+            pattern={pattern}
+            flags={flags}
+            text={text}
+            analysis={analysis}
+            onHoverGroup={setActiveGroup}
+          />
+        </div>
+      </main>
 
-        {/* Test editor and match table */}
-        <main className="flex-1 min-h-0 min-w-0 flex flex-col md:flex-row overflow-hidden">
-          {/* Test string editor */}
-          <div className="flex-1 min-h-0 min-w-0 h-full">
-            <TestEditor
-              testText={testText}
-              onTestTextChange={setTestText}
-              analysis={analysis}
-              hoveredGroupIndex={hoveredGroupIndex}
-              onHoverGroup={setHoveredGroupIndex}
-              hoveredTokenId={hoveredTokenId}
-            />
-          </div>
-
-          {/* Match results and replace */}
-          <div className="w-full md:w-[380px] lg:w-[440px] border-t md:border-t-0 md:border-l border-border h-full flex flex-col shrink-0">
-            <MatchTable
-              analysis={analysis}
-              testText={testText}
-              hoveredGroupIndex={hoveredGroupIndex}
-              onHoverGroup={setHoveredGroupIndex}
-              replacementText={replacementText}
-              onReplacementTextChange={setReplacementText}
-              comparePattern={comparePattern}
-              compareFlags={compareFlags}
-              onComparePatternChange={setComparePattern}
-              onCompareFlagsChange={setCompareFlags}
-            />
-          </div>
-        </main>
+      <div className="h-72 border-t border-border md:h-[38vh]">
+        <ExplanationPanel tokens={analysis.tokens} />
       </div>
 
-      {/* Bottom inspector tabs */}
-      <Inspector
-        activeTab={activeTab}
-        onSelectTab={setActiveTab}
-        analysis={analysis}
-        testText={testText}
-        pattern={pattern}
-        flags={flags}
-        hoveredTokenId={hoveredTokenId}
-        onHoverToken={setHoveredTokenId}
-        isCollapsed={isInspectorCollapsed}
-        onToggleCollapse={() => setIsInspectorCollapsed(!isInspectorCollapsed)}
-        onApplyFix={handleApplyFix}
-      />
-
-      {/* Bottom status bar */}
-      <footer className="h-6 px-3 bg-surface-subtle border-t border-border flex items-center justify-between text-[10px] font-mono text-foreground-dim select-none shrink-0 z-10">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => {
-              soundFX.playLatch();
-              setCheatsheetOpen(true);
-            }}
-            className="hover:text-foreground transition-colors flex items-center gap-1"
-            title="Open syntax cheatsheet"
-          >
-            <kbd className="px-1 py-0.2 rounded bg-surface border border-border text-[9px]">Ctrl+K</kbd>
-            <span>Cheatsheet</span>
-          </button>
-
-          <span className="text-border">·</span>
-
-          <button
-            onClick={handleShare}
-            className="hover:text-foreground transition-colors flex items-center gap-1"
-            title="Copy shareable link"
-          >
-            <kbd className="px-1 py-0.2 rounded bg-surface border border-border text-[9px]">Ctrl+S</kbd>
-            <span>Share</span>
-          </button>
-
-          <span className="text-border">·</span>
-
-          <button
-            onClick={() => {
-              soundFX.playLatch();
-              setPaletteOpen(!paletteOpen);
-            }}
-            className="hover:text-foreground transition-colors flex items-center gap-1"
-            title="Toggle token palette"
-          >
-            <kbd className="px-1 py-0.2 rounded bg-surface border border-border text-[9px]">Ctrl+B</kbd>
-            <span>Tokens</span>
-          </button>
-
-          <span className="text-border hidden md:inline">·</span>
-
-          <span className="hidden md:inline text-foreground-muted/60">
-            <kbd className="px-1 py-0.2 rounded bg-surface border border-border text-[9px]">Alt+1..6</kbd> Switch Tabs
-          </span>
-
-          <span className="text-border hidden md:inline">·</span>
-
-          <span className="hidden md:inline text-foreground-muted/60">
-            <kbd className="px-1 py-0.2 rounded bg-surface border border-border text-[9px]">?</kbd> Shortcuts
-          </span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <span className="text-foreground-muted/80">
-            Engine: <strong className="text-foreground font-semibold">Client-side Parser</strong>
-          </span>
-          <span className="text-border">·</span>
-          <span className="text-foreground-muted/80">
-            Switch: <strong className="text-amber-400 font-semibold uppercase">{soundProfile}</strong>
-          </span>
-        </div>
-      </footer>
-
-      {/* Modals with spring entrance */}
-      <CheatsheetModal
-        isOpen={cheatsheetOpen}
-        onClose={() => setCheatsheetOpen(false)}
-        onInsertToken={handleInsertToken}
-      />
-
-      <LibraryModal
-        isOpen={libraryOpen}
-        onClose={() => setLibraryOpen(false)}
-        onSelectPattern={handleSelectPreset}
-      />
-
-      <ChallengesModal
-        isOpen={challengesOpen}
-        onClose={() => setChallengesOpen(false)}
-        onLoadIntoWorkspace={handleSelectPreset}
-      />
+      {openWindow === 'examples' && (
+        <ExamplesModal
+          onClose={() => setOpenWindow(null)}
+          onLoad={(example) => loadIntoEditor(example.pattern, example.flags, example.sample.join('\n'))}
+        />
+      )}
+      {openWindow === 'cheatsheet' && <CheatsheetModal onClose={() => setOpenWindow(null)} onInsert={insertIntoPattern} />}
+      {openWindow === 'practice' && <PracticeModal onClose={() => setOpenWindow(null)} onTryInEditor={loadIntoEditor} />}
     </div>
   );
-};
+}

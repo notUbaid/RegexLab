@@ -1,69 +1,47 @@
-import { RegexAnalysisResult } from './types';
-import { tokenize } from './lexer';
-import { parseAst } from './parser';
-import { executeMatches, simulateTrace } from './matcher';
-import { analyzeComplexity } from './complexity';
-import { checkCompatibility } from './compatibility';
-import { translateTokens } from './translator';
+// The one function the UI calls. Workspace.tsx runs it (memoised) whenever the
+// pattern, flags or test text change, and passes the result down to every panel.
+import { tokenize } from './lexer.ts';
+import { findMatches } from './matcher.ts';
+import { findSlowPattern } from './slowPattern.ts';
+import type { Match, Token } from './types.ts';
 
-export function analyzeRegex(pattern: string, flags: string, testText: string): RegexAnalysisResult {
-  if (!pattern) {
-    const emptyAst = parseAst([], '');
-    return {
-      pattern: '',
-      flags,
-      isValid: true,
-      error: null,
-      tokens: [],
-      ast: emptyAst,
-      matches: [],
-      matchCount: 0,
-      executionTimeMs: 0,
-      trace: [],
-      complexity: analyzeComplexity(''),
-      compatibility: checkCompatibility('', flags),
-      explanation: [],
-    };
-  }
+export interface Analysis {
+  /** Syntax error with a plain-English hint, or null when the pattern is valid. */
+  error: string | null;
+  tokens: Token[];
+  matches: Match[];
+  /** Performance warning (see slowPattern.ts), or null. */
+  warning: string | null;
+}
 
-  // 1. Verify syntax validity
-  let isValid = true;
-  let syntaxError: string | null = null;
-  try {
-    new RegExp(pattern, flags);
-  } catch (err: unknown) {
-    isValid = false;
-    syntaxError = err instanceof Error ? err.message : String(err);
-  }
+// The browser's error messages are short and technical, so the most common ones get a hint.
+// The text on the left is exactly what Chrome and Edge say. Other browsers just show their own message.
+const ERROR_HINTS: Record<string, string> = {
+  'Unterminated group': 'Every ( needs a matching ).',
+  "Unmatched ')'": 'There is a ) without a ( before it. Write \\) to match a real bracket.',
+  'Nothing to repeat': 'A *, + or ? needs something before it to repeat. Write \\+ to match a real +.',
+  'Unterminated character class': 'Every [ needs a matching ].',
+  '\\ at end of pattern': 'The pattern ends with a lone \\. Write \\\\ to match a real backslash.',
+  'numbers out of order in {} quantifier': 'In {min,max} the first number must not be bigger than the second.',
+  'Range out of order in character class': 'A range like [z-a] goes backwards. Write it as [a-z].',
+  'Invalid group': '(? must be followed by :, =, !, <=, <! or <name>.',
+};
 
-  // 2. Turn pattern into tokens and AST
+export function analyze(pattern: string, flags: string, text: string): Analysis {
   const tokens = tokenize(pattern);
-  const ast = parseAst(tokens, pattern);
+  const warning = findSlowPattern(tokens);
 
-  // 3. Find matches
-  const { matches, timeMs } = isValid
-    ? executeMatches(pattern, flags, testText)
-    : { matches: [], timeMs: 0 };
+  // An empty pattern matches an empty string at every position, which is noise.
+  if (!pattern) return { error: null, tokens, matches: [], warning };
 
-  // 4. Debugger trace, complexity check, and explanation
-  const trace = isValid ? simulateTrace(tokens, testText) : [];
-  const complexity = analyzeComplexity(pattern);
-  const compatibility = checkCompatibility(pattern, flags);
-  const explanation = translateTokens(tokens);
-
-  return {
-    pattern,
-    flags,
-    isValid,
-    error: syntaxError,
-    tokens,
-    ast,
-    matches,
-    matchCount: matches.length,
-    executionTimeMs: timeMs,
-    trace,
-    complexity,
-    compatibility,
-    explanation,
-  };
+  try {
+    return { error: null, tokens, matches: findMatches(pattern, flags, text), warning };
+  } catch (err) {
+    // "Invalid regular expression: /(abc/gm: Unterminated group"
+    //   -> "Unterminated group. Every ( needs a matching )."
+    const fullMessage = err instanceof Error ? err.message : String(err);
+    const message = fullMessage.replace(/^Invalid regular expression: \/.*\/[a-z]*: /, '');
+    const hint = ERROR_HINTS[message];
+    return { error: hint ? `${message}. ${hint}` : message, tokens, matches: [], warning };
+  }
 }

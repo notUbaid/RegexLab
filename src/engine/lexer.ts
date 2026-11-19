@@ -1,446 +1,178 @@
-import { RegexToken } from './types';
+// Splits a regex pattern into tokens and describes each one in plain English.
+//
+//   tokenize('\\d+')  ->  [ { raw: '\d', kind: 'class',      description: 'any digit (0-9)' },
+//                           { raw: '+',  kind: 'quantifier', description: 'repeat "\d" one or more times' } ]
+//
+// The lexer only explains the pattern. It never decides whether text matches:
+// matching is done by the browser's real RegExp engine (see matcher.ts).
+import type { Token, TokenKind } from './types.ts';
 
-const METACHARACTERS = new Set(['^', '$', '\\', '.', '*', '+', '?', '(', ')', '[', ']', '{', '}', '|']);
+// Backslash escapes with a special meaning. Any other escape (like \. or \/) is a plain character.
+const ESCAPES: Record<string, { kind: TokenKind; description: string }> = {
+  d: { kind: 'class', description: 'any digit (0-9)' },
+  D: { kind: 'class', description: 'any character that is not a digit' },
+  w: { kind: 'class', description: 'any letter, digit or underscore' },
+  W: { kind: 'class', description: 'any character that is not a letter, digit or underscore' },
+  s: { kind: 'class', description: 'any whitespace (space, tab, line break)' },
+  S: { kind: 'class', description: 'any character that is not whitespace' },
+  b: { kind: 'anchor', description: 'a word boundary (the edge of a word)' },
+  B: { kind: 'anchor', description: 'a position that is not a word boundary' },
+  n: { kind: 'literal', description: 'a line break' },
+  t: { kind: 'literal', description: 'a tab' },
+  r: { kind: 'literal', description: 'a carriage return' },
+  f: { kind: 'literal', description: 'a form feed (an old page-break character)' },
+  v: { kind: 'literal', description: 'a vertical tab' },
+  0: { kind: 'literal', description: 'the null character (character code 0)' },
+};
 
-export function tokenize(pattern: string): RegexToken[] {
-  if (!pattern) return [];
+// Characters that mean something special in a pattern. A backslash in front makes them plain, e.g. \. or \(
+const SPECIAL_CHARACTERS = '.*+?^$()[]{}|\\';
 
-  const tokens: RegexToken[] = [];
+// Groups that do not capture. Checked before named groups, because (?<= also starts with (?<
+const NON_CAPTURING_GROUPS = [
+  { opener: '(?:', description: 'start of a group (not captured)' },
+  { opener: '(?=', description: 'start of a lookahead: the text right after this point must match' },
+  { opener: '(?!', description: 'start of a negative lookahead: the text right after this point must NOT match' },
+  { opener: '(?<=', description: 'start of a lookbehind: the text right before this point must match' },
+  { opener: '(?<!', description: 'start of a negative lookbehind: the text right before this point must NOT match' },
+];
+
+// *, +, ?, {3}, {3,}, {3,5}, each optionally followed by ? to make it lazy
+const QUANTIFIER = /^(?:[*+?]|\{(\d+)(,(\d*))?\})\??/;
+
+export function tokenize(pattern: string): Token[] {
+  const tokens: Token[] = [];
+  const openGroups: (number | undefined)[] = []; // capture number of each open group (undefined = not capturing)
+  let groupCount = 0;
   let i = 0;
-  let groupCounter = 0;
-  let depth = 0;
-  const groupStack: number[] = [];
+
+  // Adds a token covering pattern[i..end) and moves i forward to end.
+  function add(kind: TokenKind, end: number, description: string, groupNumber?: number) {
+    tokens.push({ kind, raw: pattern.slice(i, end), start: i, end, depth: openGroups.length, description, groupNumber });
+    i = end;
+  }
 
   while (i < pattern.length) {
     const ch = pattern[i];
+    const rest = pattern.slice(i);
 
-    // Escaped sequences
-    if (ch === '\\' && i + 1 < pattern.length) {
+    if (ch === '\\') {
       const next = pattern[i + 1];
-      const start = i;
-      const raw = `\\${next}`;
-
-      if (next === 'd') {
-        tokens.push({
-          id: `tok-${start}`,
-          type: 'character_class',
-          category: 'character_class',
-          raw,
-          start,
-          end: i + 2,
-          title: 'Digit',
-          explanation: 'Matches any single digit (0-9)',
-          depth,
-        });
-      } else if (next === 'D') {
-        tokens.push({
-          id: `tok-${start}`,
-          type: 'character_class',
-          category: 'character_class',
-          raw,
-          start,
-          end: i + 2,
-          title: 'Non-Digit',
-          explanation: 'Matches any character that is not a digit',
-          depth,
-        });
-      } else if (next === 'w') {
-        tokens.push({
-          id: `tok-${start}`,
-          type: 'character_class',
-          category: 'character_class',
-          raw,
-          start,
-          end: i + 2,
-          title: 'Word Character',
-          explanation: 'Matches any alphanumeric character or underscore ([a-zA-Z0-9_])',
-          depth,
-        });
-      } else if (next === 'W') {
-        tokens.push({
-          id: `tok-${start}`,
-          type: 'character_class',
-          category: 'character_class',
-          raw,
-          start,
-          end: i + 2,
-          title: 'Non-Word Character',
-          explanation: 'Matches any symbol, punctuation, or whitespace',
-          depth,
-        });
-      } else if (next === 's') {
-        tokens.push({
-          id: `tok-${start}`,
-          type: 'character_class',
-          category: 'character_class',
-          raw,
-          start,
-          end: i + 2,
-          title: 'Whitespace',
-          explanation: 'Matches spaces, tabs, and line breaks',
-          depth,
-        });
-      } else if (next === 'S') {
-        tokens.push({
-          id: `tok-${start}`,
-          type: 'character_class',
-          category: 'character_class',
-          raw,
-          start,
-          end: i + 2,
-          title: 'Non-Whitespace',
-          explanation: 'Matches any character that is not whitespace',
-          depth,
-        });
-      } else if (next === 'b') {
-        tokens.push({
-          id: `tok-${start}`,
-          type: 'anchor',
-          category: 'anchor',
-          raw,
-          start,
-          end: i + 2,
-          title: 'Word Boundary',
-          explanation: 'Zero-width boundary between word and non-word characters',
-          depth,
-        });
-      } else if (next === 'B') {
-        tokens.push({
-          id: `tok-${start}`,
-          type: 'anchor',
-          category: 'anchor',
-          raw,
-          start,
-          end: i + 2,
-          title: 'Non-Word Boundary',
-          explanation: 'Zero-width position inside a continuous word or non-word sequence',
-          depth,
-        });
+      const namedReference = rest.match(/^\\k<([A-Za-z_$][\w$]*)>/); // \k<year>
+      const characterCode = rest.match(/^\\(x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4})/); // a character code: \x then 2 hex digits, or \u then 4
+      if (next === undefined) {
+        add('literal', i + 1, 'a lone backslash (the escape is incomplete)');
+      } else if (/[1-9]/.test(next)) {
+        add('backreference', i + 2, `the exact same text that group ${next} matched`);
+      } else if (namedReference) {
+        add('backreference', i + namedReference[0].length, `the exact same text that the group named "${namedReference[1]}" matched`);
+      } else if (characterCode) {
+        const character = String.fromCharCode(parseInt(characterCode[1].slice(1), 16));
+        add('literal', i + characterCode[0].length, `the character "${character}" (written as a character code)`);
+      } else if (ESCAPES[next]) {
+        add(ESCAPES[next].kind, i + 2, ESCAPES[next].description);
+      } else if (SPECIAL_CHARACTERS.includes(next)) {
+        add('literal', i + 2, `a real "${next}" character (the backslash turns off its special meaning)`);
       } else {
-        tokens.push({
-          id: `tok-${start}`,
-          type: 'literal',
-          category: 'literal',
-          raw,
-          start,
-          end: i + 2,
-          title: `Escaped Literal: ${next}`,
-          explanation: `Matches character "${next}" literally without special regex behavior`,
-          depth,
-        });
+        add('literal', i + 2, `the character "${next}"`);
       }
-
-      i += 2;
       continue;
     }
 
-    // Anchors
-    if (ch === '^') {
-      tokens.push({
-        id: `tok-${i}`,
-        type: 'anchor',
-        category: 'anchor',
-        raw: '^',
-        start: i,
-        end: i + 1,
-        title: 'Start of String / Line',
-        explanation: 'Asserts position at the beginning of input or line',
-        depth,
-      });
-      i++;
-      continue;
-    }
-
-    if (ch === '$') {
-      tokens.push({
-        id: `tok-${i}`,
-        type: 'anchor',
-        category: 'anchor',
-        raw: '$',
-        start: i,
-        end: i + 1,
-        title: 'End of String / Line',
-        explanation: 'Asserts position at the end of input or line',
-        depth,
-      });
-      i++;
-      continue;
-    }
-
-    // Dot wildcard
-    if (ch === '.') {
-      tokens.push({
-        id: `tok-${i}`,
-        type: 'character_class',
-        category: 'character_class',
-        raw: '.',
-        start: i,
-        end: i + 1,
-        title: 'Wildcard Dot',
-        explanation: 'Matches any single character except newlines (or all with /s)',
-        depth,
-      });
-      i++;
-      continue;
-    }
-
-    // Alternation
-    if (ch === '|') {
-      tokens.push({
-        id: `tok-${i}`,
-        type: 'alternation',
-        category: 'alternation',
-        raw: '|',
-        start: i,
-        end: i + 1,
-        title: 'Alternation (OR)',
-        explanation: 'Matches either the left expression or the right expression',
-        depth,
-      });
-      i++;
-      continue;
-    }
-
-    // Character sets [abc] / [^abc]
     if (ch === '[') {
-      const start = i;
-      let j = i + 1;
-      let isNegated = false;
-
-      if (j < pattern.length && pattern[j] === '^') {
-        isNegated = true;
-        j++;
+      // Find the closing ]. A backslash skips the character after it, so [a\]b] is one set.
+      let end = i + 1;
+      while (end < pattern.length && pattern[end] !== ']') {
+        if (pattern[end] === '\\') end += 2;
+        else end += 1;
       }
+      end = Math.min(end + 1, pattern.length); // include the ] (or stop at the end if it is missing)
 
-      while (j < pattern.length) {
-        if (pattern[j] === '\\') {
-          j += 2;
-        } else if (pattern[j] === ']') {
-          j++;
-          break;
-        } else {
-          j++;
-        }
-      }
-
-      const raw = pattern.slice(start, j);
-      tokens.push({
-        id: `tok-${start}`,
-        type: 'character_class',
-        category: 'character_class',
-        raw,
-        start,
-        end: j,
-        title: isNegated ? 'Negated Set' : 'Character Set',
-        explanation: isNegated
-          ? `Matches any character NOT in ${raw}`
-          : `Matches any single character in ${raw}`,
-        depth,
-      });
-      i = j;
+      const set = pattern.slice(i, end);
+      if (set.startsWith('[^')) add('class', end, `any one character NOT in ${set}`);
+      else add('class', end, `any one character from ${set}`);
       continue;
     }
 
-    // Group open
     if (ch === '(') {
-      const start = i;
-      let groupType = 'group';
-      let title = 'Capture Group';
-      let explanation = 'Groups characters and captures matched text';
-      let currentGroupIndex: number | undefined = undefined;
-
-      if (pattern.startsWith('(?:', i)) {
-        groupType = 'non_capturing';
-        title = 'Non-Capturing Group';
-        explanation = 'Groups characters together without creating a capture index';
-        i += 3;
-      } else if (pattern.startsWith('(?=', i)) {
-        groupType = 'lookaround';
-        title = 'Positive Lookahead';
-        explanation = 'Asserts what follows matches without consuming text';
-        i += 3;
-      } else if (pattern.startsWith('(?!', i)) {
-        groupType = 'lookaround';
-        title = 'Negative Lookahead';
-        explanation = 'Asserts what follows does NOT match without consuming text';
-        i += 3;
-      } else if (pattern.startsWith('(?<=', i)) {
-        groupType = 'lookaround';
-        title = 'Positive Lookbehind';
-        explanation = 'Asserts what precedes matches without consuming text';
-        i += 4;
-      } else if (pattern.startsWith('(?<!', i)) {
-        groupType = 'lookaround';
-        title = 'Negative Lookbehind';
-        explanation = 'Asserts what precedes does NOT match without consuming text';
-        i += 4;
-      } else if (pattern.startsWith('(?<', i)) {
-        const endName = pattern.indexOf('>', i);
-        if (endName !== -1) {
-          const name = pattern.slice(i + 3, endName);
-          groupCounter++;
-          currentGroupIndex = groupCounter;
-          groupStack.push(currentGroupIndex);
-          tokens.push({
-            id: `tok-${start}`,
-            type: 'group_open',
-            category: 'group',
-            raw: pattern.slice(start, endName + 1),
-            start,
-            end: endName + 1,
-            title: `Named Group: ${name}`,
-            explanation: `Captures matched text into group named "${name}"`,
-            depth,
-            groupIndex: currentGroupIndex,
-          });
-          depth++;
-          i = endName + 1;
-          continue;
-        } else {
-          i++;
-        }
-      } else {
-        groupCounter++;
-        currentGroupIndex = groupCounter;
-        groupStack.push(currentGroupIndex);
-        i++;
-      }
-
-      tokens.push({
-        id: `tok-${start}`,
-        type: 'group_open',
-        category: 'group',
-        raw: pattern.slice(start, i),
-        start,
-        end: i,
-        title,
-        explanation,
-        depth,
-        groupIndex: currentGroupIndex,
-      });
-      depth++;
-      continue;
-    }
-
-    // Group close
-    if (ch === ')') {
-      depth = Math.max(0, depth - 1);
-      const groupIdx = groupStack.pop();
-      tokens.push({
-        id: `tok-${i}`,
-        type: 'group_close',
-        category: 'group',
-        raw: ')',
-        start: i,
-        end: i + 1,
-        title: groupIdx ? `End of Group #${groupIdx}` : 'End of Group',
-        explanation: 'Closes the preceding group',
-        depth,
-        groupIndex: groupIdx,
-      });
-      i++;
-      continue;
-    }
-
-    // Quantifiers: *, +, ?, {n,m}
-    if (ch === '*' || ch === '+' || ch === '?') {
-      const start = i;
-      let raw = ch;
-      let greedy = true;
-
-      if (i + 1 < pattern.length && pattern[i + 1] === '?') {
-        greedy = false;
-        raw += '?';
-        i++;
-      }
-
-      let title = 'Quantifier';
-      let explanation = '';
-      let min = 0;
-      let max: number | undefined = undefined;
-
-      if (ch === '*') {
-        title = greedy ? 'Zero or More (Greedy)' : 'Zero or More (Lazy)';
-        explanation = 'Matches 0 or more occurrences of the preceding token';
-        min = 0;
-      } else if (ch === '+') {
-        title = greedy ? 'One or More (Greedy)' : 'One or More (Lazy)';
-        explanation = 'Matches 1 or more occurrences of the preceding token';
-        min = 1;
-      } else if (ch === '?') {
-        title = greedy ? 'Optional' : 'Optional (Lazy)';
-        explanation = 'Matches 0 or 1 occurrence of the preceding token';
-        min = 0;
-        max = 1;
-      }
-
-      tokens.push({
-        id: `tok-${start}`,
-        type: 'quantifier',
-        category: 'quantifier',
-        raw,
-        start,
-        end: i + 1,
-        title,
-        explanation,
-        depth,
-        quantifier: { min, max, greedy },
-      });
-      i++;
-      continue;
-    }
-
-    // Range quantifier {min,max}
-    if (ch === '{') {
-      const close = pattern.indexOf('}', i);
-      if (close !== -1 && /^{\d+(?:,\d*)?}$/.test(pattern.slice(i, close + 1))) {
-        const start = i;
-        let raw = pattern.slice(i, close + 1);
-        let greedy = true;
-        let endIdx = close + 1;
-
-        if (endIdx < pattern.length && pattern[endIdx] === '?') {
-          greedy = false;
-          raw += '?';
-          endIdx++;
-        }
-
-        const inner = raw.replace(/[{}]/g, '').replace('?', '');
-        const parts = inner.split(',').map((p) => p.trim());
-        const min = parseInt(parts[0], 10);
-        const max = parts.length > 1 ? (parts[1] === '' ? undefined : parseInt(parts[1], 10)) : min;
-
-        tokens.push({
-          id: `tok-${start}`,
-          type: 'quantifier',
-          category: 'quantifier',
-          raw,
-          start,
-          end: endIdx,
-          title: `Exact / Range Quantifier (${inner})`,
-          explanation: max !== undefined ? `Matches between ${min} and ${max} times` : `Matches at least ${min} times`,
-          depth,
-          quantifier: { min, max, greedy },
-        });
-        i = endIdx;
+      const nonCapturing = NON_CAPTURING_GROUPS.find((group) => rest.startsWith(group.opener));
+      if (nonCapturing) {
+        add('group-open', i + nonCapturing.opener.length, nonCapturing.description);
+        openGroups.push(undefined);
         continue;
       }
+      // (?i:...) turns a flag on only inside the group. It does not capture either.
+      const flagGroup = rest.match(/^\(\?[a-z-]+:/);
+      if (flagGroup) {
+        add('group-open', i + flagGroup[0].length, `start of a group (not captured) that uses the flags "${flagGroup[0].slice(2, -1)}" inside it`);
+        openGroups.push(undefined);
+        continue;
+      }
+      groupCount++;
+      const named = rest.match(/^\(\?<([A-Za-z_$][\w$]*)>/);
+      if (named) {
+        add('group-open', i + named[0].length, `start of group ${groupCount}, named "${named[1]}" (captured)`, groupCount);
+      } else {
+        add('group-open', i + 1, `start of group ${groupCount} (captured)`, groupCount);
+      }
+      openGroups.push(groupCount);
+      continue;
     }
 
-    // Default: Literal character
-    tokens.push({
-      id: `tok-${i}`,
-      type: 'literal',
-      category: 'literal',
-      raw: ch,
-      start: i,
-      end: i + 1,
-      title: `Literal: "${ch}"`,
-      explanation: `Matches exact character "${ch}"`,
-      depth,
-    });
-    i++;
+    if (ch === ')') {
+      const number = openGroups.pop();
+      add('group-close', i + 1, number ? `end of group ${number}` : 'end of group', number);
+      continue;
+    }
+
+    if (ch === '|') {
+      add('or', i + 1, 'OR: match either what comes before or what comes after');
+      continue;
+    }
+    if (ch === '^') {
+      add('anchor', i + 1, 'start of the text (start of each line with the m flag)');
+      continue;
+    }
+    if (ch === '$') {
+      add('anchor', i + 1, 'end of the text (end of each line with the m flag)');
+      continue;
+    }
+    if (ch === '.') {
+      add('class', i + 1, 'any character except a line break (any character at all with the s flag)');
+      continue;
+    }
+
+    const quantifier = rest.match(QUANTIFIER);
+    if (quantifier) {
+      const previous = tokens[tokens.length - 1];
+      add('quantifier', i + quantifier[0].length, describeQuantifier(quantifier, previous));
+      continue;
+    }
+
+    add('literal', i + 1, `the character "${ch}"`);
   }
 
   return tokens;
+}
+
+function describeQuantifier([raw, min, comma, max]: RegExpMatchArray, previous: Token | undefined): string {
+  // Say what gets repeated: a whole group, or the one piece just before, e.g. "\d".
+  let target = 'the previous item';
+  if (previous?.kind === 'group-close') {
+    target = previous.groupNumber ? `group ${previous.groupNumber}` : 'the group before it';
+  } else if (previous) {
+    target = `"${previous.raw}"`;
+  }
+
+  let times: string;
+  if (raw[0] === '*') times = 'zero or more times';
+  else if (raw[0] === '+') times = 'one or more times';
+  else if (raw[0] === '?') times = 'zero or one time (makes it optional)';
+  else if (comma === undefined) times = `exactly ${min} times`;
+  else if (max === '') times = `${min} or more times`;
+  else times = `between ${min} and ${max} times`;
+
+  // A trailing ? turns a quantifier lazy (but a lone ? is just "optional").
+  const lazy = raw.length > 1 && raw.endsWith('?');
+  return `repeat ${target} ${times}${lazy ? ', as few times as possible' : ''}`;
 }
