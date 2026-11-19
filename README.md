@@ -7,7 +7,7 @@ A regular expression tester that explains your pattern. Type a pattern, paste so
 
 **Live app:** https://regex-lab-delta.vercel.app
 
-![RegexLab: a date pattern highlighting three dates, with the matches listed on the right and the pattern explained at the bottom](public/preview.png)
+![RegexLab: a date pattern highlighting three dates in the text, with each part of the pattern explained on the right](public/preview.png)
 
 ## Try it in 30 seconds
 
@@ -18,8 +18,9 @@ A regular expression tester that explains your pattern. Type a pattern, paste so
 ## Features
 
 - **Live highlighting.** Matches are highlighted in the text as you type, and each capture group gets its own colour.
-- **Plain-English explanation.** The bottom panel splits the pattern into pieces and explains each one: `\d{4}` becomes "any digit (0-9)" + "repeat "\d" exactly 4 times".
-- **Match list.** Every match with its position and capture groups. Hover a group to outline it in the text.
+- **Plain-English explanation.** The Explanation tab splits the pattern into pieces and explains each one: `\d{4}` becomes "any digit (0-9)" + "repeat "\d" exactly 4 times".
+- **Match list.** Every match with its capture groups. Hover a group to outline it in the text.
+- **Hover for more.** Every button explains itself in a short tooltip, so the screen stays simple.
 - **Find and replace.** Preview `text.replace(pattern, replacement)` with `$1`, `$2`, `$&` and `$<name>`.
 - **Flags with names.** `g` global, `i` ignore case, `m` multiline, `s` dot all, each with a tooltip.
 - **Helpful errors.** A broken pattern shows the browser's message plus a hint, e.g. "Unterminated group. Every ( needs a matching )."
@@ -67,10 +68,11 @@ src/
 ├── components/
 │   ├── Workspace.tsx         The screen: holds all state, calls analyze()
 │   ├── Header.tsx            Top bar
-│   ├── PatternInput.tsx      Pattern box, flags, error/warning
+│   ├── PatternInput.tsx      Pattern box, flags, status line
 │   ├── TestEditor.tsx        Text box with highlighted matches
-│   ├── ResultsPanel.tsx      Matches and Replace tabs
+│   ├── ResultsPanel.tsx      Right panel: Explanation, Matches and Replace tabs
 │   ├── ExplanationPanel.tsx  Plain-English breakdown
+│   ├── Tip.tsx               Hover tooltips (plain CSS)
 │   ├── Modal.tsx             Shared window frame
 │   └── ExamplesModal / CheatsheetModal / PracticeModal
 ├── data/                     Examples, cheatsheet entries, practice exercises

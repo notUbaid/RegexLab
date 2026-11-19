@@ -7,7 +7,6 @@ import { Header } from './Header';
 import { PatternInput } from './PatternInput';
 import { TestEditor } from './TestEditor';
 import { ResultsPanel } from './ResultsPanel';
-import { ExplanationPanel } from './ExplanationPanel';
 import { ExamplesModal } from './ExamplesModal';
 import { CheatsheetModal } from './CheatsheetModal';
 import { PracticeModal } from './PracticeModal';
@@ -110,7 +109,8 @@ export function Workspace() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground md:h-screen md:overflow-hidden">
+    // overflow-x-clip: a hidden tooltip near the edge of a very narrow phone must not make the page scroll sideways.
+    <div className="flex min-h-screen flex-col overflow-x-clip bg-background text-foreground md:h-screen md:overflow-hidden">
       <Header
         onOpenExamples={() => setOpenWindow('examples')}
         onOpenCheatsheet={() => setOpenWindow('cheatsheet')}
@@ -129,13 +129,14 @@ export function Workspace() {
         onToggleFlag={toggleFlag}
         error={analysis.error}
         warning={analysis.warning}
+        matchCount={analysis.matches.length}
       />
 
       <main className="flex flex-1 flex-col md:min-h-0 md:flex-row">
         <div className="h-80 md:h-auto md:min-w-0 md:flex-1">
           <TestEditor text={text} onTextChange={setText} matches={analysis.matches} activeGroup={activeGroup} />
         </div>
-        <div className="h-96 border-t border-border md:h-auto md:w-[380px] md:border-l md:border-t-0 lg:w-[420px]">
+        <div className="h-[28rem] border-t border-border md:h-auto md:w-[420px] md:border-l md:border-t-0 lg:w-[460px]">
           <ResultsPanel
             pattern={pattern}
             flags={flags}
@@ -145,10 +146,6 @@ export function Workspace() {
           />
         </div>
       </main>
-
-      <div className="h-72 border-t border-border md:h-[38vh]">
-        <ExplanationPanel tokens={analysis.tokens} />
-      </div>
 
       {openWindow === 'examples' && (
         <ExamplesModal

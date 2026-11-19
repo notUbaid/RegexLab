@@ -6,11 +6,13 @@ About 8 minutes of app, then 4 minutes of code.
 
 ## Before you start
 
-1. Run `npm install` (first time only), then `npm run dev`.
-2. Open http://localhost:5173 in a **private / incognito window**, so the theme and practice progress start fresh.
-3. Make the window wide (1280px or more) and keep the browser zoom at 100%.
+1. Open **https://regex-lab-delta.vercel.app** in a **private / incognito window**, so the theme and practice progress start fresh.
+2. Make the window wide (1280px or more) and keep the browser zoom at 100%.
+3. Backup plan if the internet fails: run `npm install` once, then `npm run dev`, and open http://localhost:5173 instead. It is the same app.
 
 **If anything goes wrong, reload the page.** The pattern, flags and text always go back to the starting example.
+
+**Tip for the whole demo:** hover over any button (the flags, Examples, Share, ...) and a short explanation appears under it.
 
 ---
 
@@ -18,14 +20,13 @@ About 8 minutes of app, then 4 minutes of code.
 
 ### Step 1. The screen (30s)
 
-Don't type anything yet. Point at the four areas:
+Don't type anything yet. Point at the three areas:
 
 | Area | What it is |
 | --- | --- |
-| Top box | The regular expression, with the flag buttons next to it |
+| Top | The regular expression box, the flag buttons, and one status line under them ("3 matches, highlighted in the text.") |
 | Left | The test text. Matches are highlighted as you type |
-| Right | The list of matches (and a Replace tab) |
-| Bottom | "What the pattern means": every piece of the pattern in plain English |
+| Right | Three tabs: **Explanation** (what each part of the pattern means), **Matches**, and **Replace** |
 
 > "RegexLab is a regex tester that also explains the pattern. Everything runs in the browser, there's no server."
 
@@ -36,54 +37,54 @@ The pattern box already holds `(\d{4})-(\d{2})-(\d{2})`.
 **You'll see:**
 
 - Three dates highlighted in the text. The year is pink, the month blue, the day green.
-- The right panel says **Matches (3)**. Match 1 is `2026-03-14` with Group 1 `2026`, Group 2 `03`, Group 3 `14`.
-- The text on line 3 has no date, so nothing on it is highlighted.
+- The status line says **3 matches, highlighted in the text.**
+- The **Explanation** tab, read top to bottom: `(` start of group 1, `\d` any digit (0-9), `{4}` repeat "\d" exactly 4 times, `-` the character "-", and so on. The brackets of each group have the same colour as that group's highlight.
 
-**Do:** hover over **Group 2** under Match 1.
+> "The brackets make capture groups. Each group gets its own colour, in the text and in the explanation, so you can see which part of the pattern grabbed which part of the text."
 
-**You'll see:** all three months (`03`, `04`, `12`) get an outline in the text.
+**Do:** click the **Matches (3)** tab.
 
-**Do:** point at the bottom panel.
+**You'll see:** Match 1 `2026-03-14` with Group 1 `2026`, Group 2 `03`, Group 3 `14`, then Match 2 and Match 3.
 
-**You'll see:** `\d` = "any digit (0-9)", `{4}` = "repeat "\d" exactly 4 times". The brackets of each group have the same colour as that group's highlight.
+**Do:** hover over **Group 2** under Match 1. **You'll see:** all three months (`03`, `04`, `12`) get an outline in the text.
 
-> "The brackets make capture groups. Each group gets its own colour, here and in the explanation, so you can see which part of the pattern grabbed which part of the text."
+**Do:** hover over the words **Match 1**. **You'll see:** "Starts at character 16 and ends before character 26 (counting from 0)."
+
+Click the **Explanation** tab again before the next step.
 
 ### Step 3. Build a pattern one piece at a time (1.5 min)
 
-Select everything in the pattern box and type each pattern below, one after the other.
+Select everything in the pattern box and type each pattern below, one after the other. Watch the status line and the Explanation tab change.
 
-| Type this | Matches | What you'll see |
+| Type this | Status line says | What you'll see |
 | --- | --- | --- |
-| `\d` | 24 | Every single digit is its own match |
-| `\d+` | 9 | Whole numbers: `2026`, `03`, `14`, ... |
-| `\d{4}` | 3 | Only the three years |
-| `\d{4}-\d{2}-\d{2}` | 3 | The three full dates |
+| `\d` | 24 matches | Every single digit is its own match |
+| `\d+` | 9 matches | Whole numbers: `2026`, `03`, `14`, ... |
+| `\d{4}` | 3 matches | Only the three years |
+| `\d{4}-\d{2}-\d{2}` | 3 matches | The three full dates |
 
 > "`\d` is one digit. `+` means one or more, so the digits join up into numbers. `{4}` means exactly four, so only the years are left. Then I add the dashes and the month and day."
 
-Watch the bottom panel change with each one.
-
 ### Step 4. Flags (1 min)
 
-Flags change how the whole pattern behaves. Each button has its name written next to the letter.
+Flags change how the whole pattern behaves. Hover over any flag button to see what it does.
 
 **g (global):**
 
 1. Put the starting pattern back: `(\d{4})-(\d{2})-(\d{2})`.
-2. Click **g global** to turn it off. **You'll see:** Matches (1). Only the first date is found.
-3. Click it again to turn it back on: Matches (3).
+2. Click **g global** to turn it off. **You'll see:** "1 match". Only the first date is found.
+3. Click it again to turn it back on: "3 matches".
 
 **i (ignore case):**
 
-1. Type `invoice`. **You'll see:** "No matches", because the text says "Invoice" with a capital I.
-2. Click **i ignore case**. **You'll see:** Matches (1), "Invoice" is highlighted.
+1. Type `invoice`. **You'll see:** "No matches in the text yet.", because the text says "Invoice" with a capital I.
+2. Click **i ignore case**. **You'll see:** "1 match", and "Invoice" is highlighted.
 3. Click **i ignore case** again to turn it off.
 
 **m (multiline):**
 
-1. Type `^\w+`. **You'll see:** Matches (1): `Invoice`. `^` means "start of the text", and the text only starts once.
-2. Click **m multiline**. **You'll see:** Matches (3): `Invoice`, `Next`, `This`. Now `^` means "start of each line".
+1. Type `^\w+`. **You'll see:** "1 match": `Invoice`. `^` means "start of the text", and the text only starts once.
+2. Click **m multiline**. **You'll see:** "3 matches": `Invoice`, `Next`, `This`. Now `^` means "start of each line".
 3. Click **m multiline** again to turn it off.
 
 > "Without m, `^` and `$` are the start and end of the whole text. With m, they're the start and end of every line."
@@ -95,7 +96,7 @@ Type `(\d{4}` (a bracket that is never closed).
 **You'll see:**
 
 - Red text under the box: **"Pattern error: Unterminated group. Every ( needs a matching )."**
-- The right panel says "The pattern has an error". Nothing crashes, and the explanation still shows the pieces you typed.
+- Nothing crashes, and the Explanation tab still shows the pieces you typed.
 
 > "The browser's message is just 'Unterminated group', so I add a plain-English hint for the common mistakes."
 
@@ -111,7 +112,7 @@ Then type the closing `)` and watch the error disappear.
 
 > "`$1`, `$2`, `$3` are the three capture groups, so I'm swapping the date around from year-month-day to day/month/year."
 
-Optional: turn off **g global** and only the first date changes. A note under the box explains why. Turn g back on, then click the **Matches** tab to go back.
+Optional: turn off **g global** and only the first date changes. A note under the box explains why. Turn g back on, then click the **Explanation** tab.
 
 ### Step 7. Examples (45s)
 
@@ -119,7 +120,7 @@ Optional: turn off **g global** and only the first date changes. A note under th
 2. Type `email` in the search box.
 3. Click **Email address**.
 
-**You'll see:** five sample lines. The first two (`developer@regexlab.dev`, `sarah.connor+filter@sky.net.io`) are highlighted. `not-an-email`, `missing@domain` and `@missing-user.com` are not. Matches (2).
+**You'll see:** five sample lines. The first two (`developer@regexlab.dev`, `sarah.connor+filter@sky.net.io`) are highlighted. `not-an-email`, `missing@domain` and `@missing-user.com` are not. The status line says "2 matches".
 
 > "Every example comes with sample text: good lines get highlighted, bad ones don't. The pattern starts with `^` and ends with `$`, and it uses the m flag, so each line is checked on its own."
 
@@ -129,10 +130,10 @@ This shows that the cheatsheet inserts where your cursor is, not just at the end
 
 First **reload the page** so the starting text with the dates comes back (the email example replaced it).
 
-1. Type `\w{4}`. **You'll see:** Matches (16). It even matches pieces of longer words, like `Invo` from "Invoice".
+1. Type `\w{4}`. **You'll see:** "16 matches". It even matches pieces of longer words, like `Invo` from "Invoice".
 2. Click in the pattern box and press **Home** so the cursor is at the very start.
-3. Click **Cheatsheet**, then click **`\b` Edge of a word**. The pattern is now `\b\w{4}`: Matches (15).
-4. Press **End** to move the cursor to the end, open **Cheatsheet** again and click **`\b`** again. The pattern is now `\b\w{4}\b`: **Matches (10)**.
+3. Click **Cheatsheet**, then click **`\b` Edge of a word**. The pattern is now `\b\w{4}`: "15 matches".
+4. Press **End** to move the cursor to the end, open **Cheatsheet** again and click **`\b`** again. The pattern is now `\b\w{4}\b`: **"10 matches"**.
 
 **You'll see:** only whole 4-letter words are left: `sent`, `paid`, `Next`, `2026`, ...
 
@@ -163,7 +164,7 @@ Don't paste a long text while this pattern is in the box: the tab can freeze for
 
 > "Adding `^` and `$` forces the whole text to be digits from start to end."
 
-4. Click **Try it in the editor**. **You'll see:** the window closes, and the main screen has the pattern `^\d+$` with the g and m flags on and all 7 test lines. Matches (3).
+4. Click **Try it in the editor**. **You'll see:** the window closes, and the main screen has the pattern `^\d+$` with the g and m flags on and all 7 test lines. The status line says "3 matches".
 
 ### Step 11. Share and theme (20s)
 
@@ -199,6 +200,9 @@ The `d` (hasIndices) flag. With it, `exec()` returns `indices`: the exact `[star
 **What if the regex is invalid?**
 `new RegExp` throws an error. `analyze()` catches it, shortens the message, adds a hint for common mistakes, and returns it. The panels show an empty state and nothing crashes.
 
+**How do the hover tooltips work?**
+Plain CSS, no library (`Tip.tsx`). The label is always in the page but invisible, and Tailwind's `group-hover` makes it visible when you hover the button it wraps.
+
 **Why does `^...$` need the m flag in the examples?**
 Without m, `^` and `$` mean the start and end of the whole text. With m, they mean the start and end of each line, so each sample line is checked on its own.
 
@@ -209,10 +213,10 @@ From the tokens. A stack of open groups remembers whether each group contains `+
 One component owns all the state. Plain React state and props are enough, and easier to follow.
 
 **Is anything sent to a server?**
-No. There is no backend. A share link carries the data in the URL itself.
+No. Vercel only serves the files; the regex runs in your browser. A share link carries the data in the URL itself.
 
-**How is it tested?**
-Node's built-in test runner on the engine (no extra packages), and GitHub Actions runs the tests, the type-check and the production build on every push.
+**How is it tested and deployed?**
+Node's built-in test runner on the engine (no extra packages). GitHub Actions runs the tests, the type-check and the production build on every push, and Vercel deploys the `main` branch automatically.
 
 **What would you add next?**
-Run the regex in a Web Worker with a time limit, so even a catastrophic pattern can't freeze the tab. Also colour nested capture groups in the highlighter (today only the outer one is coloured, though every group is listed on the right).
+Run the regex in a Web Worker with a time limit, so even a catastrophic pattern can't freeze the tab. Also colour nested capture groups in the highlighter (today only the outer one is coloured, though every group is listed in the Matches tab).

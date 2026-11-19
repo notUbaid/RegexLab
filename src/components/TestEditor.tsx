@@ -32,16 +32,16 @@ export function TestEditor({ text, onTextChange, matches, activeGroup }: TestEdi
 
   return (
     <section className="flex h-full flex-col bg-surface">
-      <div className="flex h-10 shrink-0 items-center justify-between border-b border-border bg-surface-subtle px-3 text-xs">
+      <div className="flex h-11 shrink-0 items-center justify-between border-b border-border px-4 text-sm">
         <span>
           <span className="font-semibold">Test text</span>
-          <span className="ml-2 text-foreground-dim">
+          <span className="ml-2 text-xs text-foreground-dim">
             {lineCount} {lineCount === 1 ? 'line' : 'lines'}
           </span>
         </span>
         <button
           onClick={() => onTextChange('')}
-          className="flex items-center gap-1 rounded px-2 py-1 text-foreground-muted hover:bg-surface-elevated hover:text-foreground"
+          className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-foreground-muted hover:bg-surface-elevated hover:text-foreground"
         >
           <Trash2 className="h-3.5 w-3.5" />
           Clear

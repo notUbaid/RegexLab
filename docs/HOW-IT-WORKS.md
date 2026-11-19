@@ -20,11 +20,15 @@ The app has one screen (`Workspace.tsx`) and one engine entry point (`analyze()`
                      │
                      ▼
  { error, tokens, matches, warning }  passed as props to:
-   PatternInput      shows error / warning
+   PatternInput      status line: error, warning, or "3 matches"
    TestEditor        highlights matches in the text
-   ResultsPanel      lists matches, previews replace
-   ExplanationPanel  explains tokens
+   ResultsPanel      three tabs:
+     Explanation       explains tokens (ExplanationPanel.tsx)
+     Matches           lists matches and their groups
+     Replace           previews find-and-replace
 ```
+
+The screen has three areas: the pattern box at the top, the test text on the left, and the tabs on the right.
 
 Two rules keep this simple:
 
@@ -116,18 +120,29 @@ For the marks to sit exactly under the letters, both layers (and the line number
 
 ### `PatternInput.tsx`
 
-The pattern box, four flag buttons (with a word next to each letter so beginners know what they do), a Copy button, and the error or warning line from `analyze()`.
+The pattern box (with a small Copy icon inside it), four flag buttons with a word next to each letter, and one status line underneath. The status line always takes up the same space, so the screen doesn't jump. It shows, in this order:
+
+1. the error from `analyze()`, if there is one
+2. the slow-pattern warning, if there is one
+3. otherwise a short summary such as "3 matches, highlighted in the text."
 
 ### `ResultsPanel.tsx`
 
-Two tabs:
+The right-hand panel. It holds which tab is open and shows one of three:
 
-- **Matches:** one card per match with its position and groups. Hovering a group calls `onHoverGroup(n)`, and `TestEditor` outlines group `n` in the text. When there is no pattern, an error, or no match, a short message says what to do instead.
+- **Explanation** (the default): renders `ExplanationPanel`.
+- **Matches:** one card per match with its groups. Hovering a group calls `onHoverGroup(n)`, and `TestEditor` outlines group `n` in the text. The exact position is in a tooltip on "Match 1". When there is no pattern, an error, or no match, a short message says what to do instead.
 - **Replace:** runs `text.replace(new RegExp(pattern, flags), replacement)`. JavaScript's `replace` already understands `$1`, `$&` and `$<name>`, so no custom code is needed.
 
 ### `ExplanationPanel.tsx`
 
 Lists the tokens with their descriptions, indented by `depth`. Capture group brackets use the same colour as that group's highlight in the text.
+
+`buildRows()` keeps the list short in two ways: plain characters next to each other become one row (`invoice` is one row, "the text "invoice"", not seven), and closing brackets are left out because the indentation already shows where a group ends. It only changes what is displayed; the tokens themselves are untouched.
+
+### `Tip.tsx`: hover tooltips
+
+A wrapper that shows a short dark label under a button when you hover it, or reach it with the Tab key. It is plain CSS: the label is always in the page with `opacity-0`, and Tailwind's `group-hover` makes it visible. Used for the flags, the top bar buttons, Copy, and the match positions.
 
 ### The three windows
 
